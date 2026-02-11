@@ -1,0 +1,2720 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Transferuri Inter-Magazine</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+            background: #c0c0c0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(to bottom, #ffffff 0%, #dfdfdf 100%);
+            color: #000;
+            padding: 8px 12px;
+            border-bottom: 2px solid #808080;
+            box-shadow: inset 0 1px 0 #ffffff, 0 1px 0 #000000;
+        }
+        
+        .header h1 { font-size: 14px; font-weight: bold; }
+        .header p { font-size: 11px; color: #666; }
+        
+        .toolbar {
+            background: linear-gradient(to bottom, #e0e0e0 0%, #c0c0c0 100%);
+            padding: 6px;
+            border-bottom: 1px solid #808080;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .controls {
+            background: #c0c0c0;
+            padding: 12px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        label { 
+            font-weight: bold;
+            font-size: 11px;
+        }
+        
+        input[type="date"] { 
+            padding: 3px 6px;
+            border: 2px inset #d0d0d0;
+            background: white;
+            font-size: 11px;
+            font-family: 'Tahoma';
+        }
+        
+        button {
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border: 1px solid #000;
+            cursor: pointer;
+            background: linear-gradient(to bottom, #ffffff 0%, #dfdfdf 100%);
+            box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #808080;
+        }
+        
+        button:active {
+            box-shadow: inset -1px -1px 0 #ffffff, inset 1px 1px 0 #808080;
+            background: #c0c0c0;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to bottom, #0078d4 0%, #0060b0 100%);
+            color: white;
+            font-size: 12px;
+            padding: 6px 16px;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            gap: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 200px;
+            background: #c0c0c0;
+            border-right: 2px solid #808080;
+            padding: 8px;
+        }
+        
+        .magazine-list {
+            background: white;
+            border: 2px inset #d0d0d0;
+            padding: 4px;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+            font-size: 11px;
+        }
+        
+        .magazine-item {
+            padding: 6px 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .magazine-item:hover { background: #e0e0e0; }
+        .magazine-item.active { background: #0078d4; color: white; }
+        
+        .content-area {
+            flex: 1;
+            background: white;
+            border: 2px inset #d0d0d0;
+            margin: 8px;
+            overflow-y: auto;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            background: #c0c0c0;
+            border-bottom: 1px solid #808080;
+        }
+        
+        .stat-card {
+            background: white;
+            border: 2px outset #d0d0d0;
+            padding: 8px;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .stat-label { font-size: 10px; color: #000; }
+        
+        .results {
+            padding: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .loading-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 3px outset #d0d0d0;
+            padding: 30px;
+            text-align: center;
+            min-width: 400px;
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .spinner {
+            border: 6px solid #e0e0e0;
+            border-top: 6px solid #0078d4;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 15px;
+            color: #000;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AUDIT TRANSFERURI INTER-MAGAZINE</h1>
+        <p>Verificare transferuri produse intre magazine</p>
+    </div>
+    
+    <div class="toolbar">
+        <button id="tabAudit" onclick="switchTab('audit')" style="font-weight:bold; background:#0078d4; color:white;">AUDIT TRANSFERURI</button>
+        <button id="tabBirou" onclick="switchTab('birou')">BIROU INFORMATII</button>
+        <button id="tabStocuri" onclick="switchTab('stocuri')">STOCURI</button>
+        <button id="tabCustodie" onclick="switchTab('custodie')" style="background:#9c27b0; color:white;">GAJURI CUSTODIE</button>
+        <button id="tabSolduri" onclick="switchTab('solduri')">SOLDURI MAGAZIN</button>
+        <button id="tabRegistruCasa" onclick="switchTab('registrucasa')">REGISTRU CASA</button>
+        <button id="tabOperatiuni" onclick="switchTab('operatiuni')">OPERATIUNI AMANET</button>
+        <button id="tabSetari" onclick="showSetari()" style="margin-left:auto; background:#ff9800; color:white;">⚙️ SETĂRI</button>
+    </div>
+    
+    <!-- Modal Setari -->
+    <div id="modalSetari" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:#c0c0c0; border:3px outset #dfdfdf; padding:0; width:400px; box-shadow:5px 5px 15px rgba(0,0,0,0.3);">
+            <div style="background:linear-gradient(to right, #0078d4, #00a8e8); color:white; padding:6px 10px; font-weight:bold; font-size:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span>⚙️ Setări Conexiune</span>
+                <button onclick="hideSetari()" style="background:transparent; border:none; color:white; cursor:pointer; font-size:16px;">✕</button>
+            </div>
+            <div style="padding:15px;">
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:11px;">Server API:</label>
+                    <select id="setServerType" onchange="updateServerFields()" style="width:100%; padding:5px; font-size:12px; border:2px inset #d0d0d0;">
+                        <option value="local">Local (localhost)</option>
+                        <option value="server">Server Extern</option>
+                    </select>
+                </div>
+                <div id="serverFields" style="display:none;">
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:11px;">IP Server:</label>
+                        <input type="text" id="setServerIP" value="194.102.193.47" style="width:100%; padding:5px; font-size:12px; border:2px inset #d0d0d0;">
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:11px;">Port:</label>
+                        <input type="text" id="setServerPort" value="3100" style="width:100%; padding:5px; font-size:12px; border:2px inset #d0d0d0;">
+                    </div>
+                </div>
+                <div style="background:#ffffcc; padding:10px; margin:10px 0; border:1px solid #e6e600; font-size:11px;">
+                    <strong>Notă:</strong> Salvează și reîncarcă pagina pentru a aplica setările.
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:15px;">
+                    <button onclick="saveSetari()" style="background:#28a745; color:white; padding:8px 20px;">💾 Salvează</button>
+                    <button onclick="hideSetari()">Anulează</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="panelAudit" class="controls">
+        <div class="form-group">
+            <label>Transferuri DIN:</label>
+            <select id="magazinSursa" style="padding:3px 6px; border:2px inset #d0d0d0; font-size:11px; width:120px;">
+                <option value="">Se incarca...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>SPRE:</label>
+            <select id="magazinDest" style="padding:3px 6px; border:2px inset #d0d0d0; font-size:11px; width:120px;">
+                <option value="">Se incarca...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>De la:</label>
+            <input type="date" id="dataStart" value="">
+        </div>
+        <div class="form-group">
+            <label>Pana la:</label>
+            <input type="date" id="dataStop" value="">
+        </div>
+        <button class="btn-primary" id="btnAudit" onclick="toggleAudit()">START VERIFICARE</button>
+        <button onclick="printRaport()" id="btnPrint" style="display:none;">LISTARE</button>
+        <button onclick="salveazaPDF()" id="btnPDF" style="display:none;">SALVARE PDF</button>
+        <span id="status" style="margin-left: 15px; font-size: 11px; font-weight: bold;"></span>
+    </div>
+    
+    <div id="panelBirou" class="controls" style="display:none;">
+        <div class="form-group">
+            <label>Cod Gaj:</label>
+            <input type="text" id="codGaj" style="padding:4px 8px; border:2px inset #d0d0d0; font-size:11px; width:150px;" placeholder="Introdu codul...">
+        </div>
+        <div class="form-group">
+            <label>SAU Client:</label>
+            <input type="text" id="numeClient" style="padding:4px 8px; border:2px inset #d0d0d0; font-size:11px; width:200px;" placeholder="Nume client...">
+        </div>
+        <div class="form-group">
+            <label>SAU CNP:</label>
+            <input type="text" id="cnpClient" style="padding:4px 8px; border:2px inset #d0d0d0; font-size:11px; width:150px;" placeholder="CNP...">
+        </div>
+        <button class="btn-primary" onclick="cautaInContracte()">CAUTA</button>
+        <button onclick="resetBirou()">RESET</button>
+        <span id="statusBirou" style="margin-left: 15px; font-size: 11px; font-weight: bold;"></span>
+    </div>
+    
+    <div id="panelStocuri" class="controls" style="display:none;">
+        <div class="form-group">
+            <label>Cauta produs:</label>
+            <input type="text" id="cautareStoc" style="padding:4px 8px; border:2px inset #d0d0d0; font-size:11px; width:200px;" placeholder="Cod sau denumire...">
+        </div>
+        <div class="form-group">
+            <label>Magazin:</label>
+            <select id="magazinStoc" style="padding:3px 6px; border:2px inset #d0d0d0; font-size:11px; width:120px;">
+                <option value="">Se incarca...</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="cautaStocuri()">CAUTA PRODUS</button>
+        <button onclick="incarcaValoriStocuri()">VALORI STOCURI</button>
+        <button onclick="resetStocuri()">RESET</button>
+        <span id="statusStocuri" style="margin-left: 15px; font-size: 11px; font-weight: bold;"></span>
+    </div>
+    
+    <div id="panelCustodie" class="controls" style="display:none;">
+        <div class="form-group">
+            <label>Magazin:</label>
+            <select id="magazinCustodie" style="padding:3px 6px; border:2px inset #d0d0d0; font-size:11px; width:120px;">
+                <option value="">TOATE</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="incarcaGajuriCustodie()" style="background:#9c27b0;">AFISEAZA GAJURI</button>
+        <button onclick="incarcaGajuriCustodieSumar()" style="background:#7b1fa2; color:white;">DOAR SUMAR</button>
+        <span style="margin-left:20px; color:#666;">|</span>
+        <div class="form-group" style="margin-left:10px;">
+            <label>IMEI/Serie:</label>
+            <input type="text" id="cautareIMEI" style="padding:4px 8px; border:2px inset #d0d0d0; font-size:11px; width:180px;" placeholder="Cauta IMEI, serie, cod...">
+        </div>
+        <button onclick="cautaIMEI()" style="background:#e91e63; color:white;">CAUTA</button>
+        <span id="statusCustodie" style="margin-left: 15px; font-size: 11px; font-weight: bold;"></span>
+    </div>
+    
+    <div id="panelSolduri" class="controls" style="display:none;">
+        <div class="form-group">
+            <label>Data:</label>
+            <input type="date" id="dataSolduri" value="">
+        </div>
+        <button class="btn-primary" onclick="incarcaSolduri()">AFISEAZA SOLDURI</button>
+        <span id="statusSolduri" style="margin-left: 15px; font-size: 11px; font-weight: bold;"></span>
+    </div>
+    
+    <div id="panelRegistruCasa" class="controls" style="display:none;">
+        <div class="form-group">
+            <label>Magazin:</label>
+            <select id="magazinCasa" style="padding:3px 6px; border:2px inset #d0d0d0; font-size:11px; width:120px;">
+                <option value="">Se incarca...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Data:</label>
+            <input type="date" id="dataCasa" value="">
+        </div>
+        <button class="btn-primary" onclick="incarcaRegistruCasa()">AFISEAZA REGISTRU</button>
+        <span id="statusCasa" style="margin-left: 15px; font-size: 11px; font-weight: bold;"></span>
+    </div>
+    
+    <div id="panelOperatiuni" class="controls" style="display:none;">
+        <div class="form-group">
+            <label>Magazin:</label>
+            <select id="magazinOperatiuni" style="padding:3px 6px; border:2px inset #d0d0d0; font-size:11px; width:120px;">
+                <option value="">Se incarca...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Data:</label>
+            <input type="date" id="dataOperatiuni" value="">
+        </div>
+        <button class="btn-primary" onclick="incarcaOperatiuni()">AFISEAZA OPERATIUNI</button>
+        <span id="statusOperatiuni" style="margin-left: 15px; font-size: 11px; font-weight: bold;"></span>
+    </div>
+    
+    <div class="stats" id="stats" style="display:none;">
+        <div class="stat-card">
+            <div class="stat-value" style="color:#dc3545;" id="statPierdute">0</div>
+            <div class="stat-label">PIERDUTE</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color:#6c757d;" id="statRezolvate">0</div>
+            <div class="stat-label">REZOLVATE</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color:#fd7e14;" id="statPosibile">0</div>
+            <div class="stat-label">POSIBILE</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color:#ffc107;" id="statTranzit">0</div>
+            <div class="stat-label">In Tranzit</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color:#28a745;" id="statGasite">0</div>
+            <div class="stat-label">Complete</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">Total Iesiri</div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="sidebar">
+            <div style="font-weight:bold; font-size:11px; margin-bottom:6px;">MAGAZINE:</div>
+            <div class="magazine-list" id="magazineList">
+                <div class="magazine-item">Csc</div>
+                <div class="magazine-item">Efn</div>
+                <div class="magazine-item">Gara</div>
+                <div class="magazine-item">M1</div>
+                <div class="magazine-item">M2</div>
+                <div class="magazine-item">M3</div>
+                <div class="magazine-item">Tec</div>
+                <div class="magazine-item">Tuzla</div>
+                <div class="magazine-item">Vlaicus</div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="results" id="results">
+                <div id="content" style="text-align:center; padding:40px; color:#666; font-size:12px;">
+                    Selecteaza perioada si apasa START VERIFICARE
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Citim setarile din localStorage
+        function getApiUrl() {
+            const settings = JSON.parse(localStorage.getItem('auditSettings') || '{}');
+            if (settings.serverType === 'server' && settings.serverIP) {
+                return `http://${settings.serverIP}:${settings.serverPort || 3100}/api`;
+            }
+            return '/api';
+        }
+        
+        const API_URL = getApiUrl();
+        console.log('API_URL setat la:', API_URL);
+        
+        let auditRunning = false;
+        let abortController = null;
+        let loadingPanel = null;
+        let ultimeleRezultate = null;
+        let ultimaListaContracte = null;
+        let ultimCriteriuCautare = null;
+        let ultimTipCautare = null;
+        let magazineList = [];
+        
+        async function loadMagazine() {
+            try {
+                const response = await fetch(API_URL + '/magazine');
+                const result = await response.json();
+                if (result.success && result.magazine) {
+                    magazineList = result.magazine;
+                    populateMagazineSelects();
+                }
+            } catch (error) {
+                console.error('Eroare incarcare magazine:', error);
+            }
+        }
+        
+        function populateMagazineSelects() {
+            const selectsWithAll = ['magazinDest', 'magazinStoc', 'magazinCustodie'];
+            const selectsNoAll = ['magazinSursa', 'magazinCasa', 'magazinOperatiuni'];
+            
+            selectsWithAll.forEach(id => {
+                const sel = document.getElementById(id);
+                if (sel) {
+                    sel.innerHTML = '<option value="">TOATE</option>';
+                    magazineList.forEach(m => {
+                        sel.innerHTML += `<option value="${m.nume}">${m.nume}</option>`;
+                    });
+                }
+            });
+            
+            selectsNoAll.forEach(id => {
+                const sel = document.getElementById(id);
+                if (sel) {
+                    sel.innerHTML = '';
+                    magazineList.forEach(m => {
+                        sel.innerHTML += `<option value="${m.nume}">${m.nume}</option>`;
+                    });
+                }
+            });
+        }
+        
+        // Functii pentru Setari
+        function showSetari() {
+            const modal = document.getElementById('modalSetari');
+            modal.style.display = 'flex';
+            
+            // Incarca setarile existente
+            const settings = JSON.parse(localStorage.getItem('auditSettings') || '{}');
+            document.getElementById('setServerType').value = settings.serverType || 'local';
+            document.getElementById('setServerIP').value = settings.serverIP || '194.102.193.47';
+            document.getElementById('setServerPort').value = settings.serverPort || '3100';
+            updateServerFields();
+        }
+        
+        function hideSetari() {
+            document.getElementById('modalSetari').style.display = 'none';
+        }
+        
+        function updateServerFields() {
+            const type = document.getElementById('setServerType').value;
+            document.getElementById('serverFields').style.display = type === 'server' ? 'block' : 'none';
+        }
+        
+        function saveSetari() {
+            const settings = {
+                serverType: document.getElementById('setServerType').value,
+                serverIP: document.getElementById('setServerIP').value,
+                serverPort: document.getElementById('setServerPort').value
+            };
+            localStorage.setItem('auditSettings', JSON.stringify(settings));
+            alert('Setări salvate! Pagina se va reîncărca.');
+            location.reload();
+        }
+        
+        loadMagazine();
+        
+        // Seteaza implicit ultimele 3 luni
+        const today = new Date();
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(today.getMonth() - 3);
+        
+        document.getElementById('dataStart').value = threeMonthsAgo.toISOString().split('T')[0];
+        document.getElementById('dataStop').value = today.toISOString().split('T')[0];
+        document.getElementById('dataCasa').value = today.toISOString().split('T')[0];
+        document.getElementById('dataOperatiuni').value = today.toISOString().split('T')[0];
+        document.getElementById('dataSolduri').value = today.toISOString().split('T')[0];
+        
+        document.getElementById('codGaj').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                cautaInContracte();
+            }
+        });
+        
+        document.getElementById('numeClient').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                cautaInContracte();
+            }
+        });
+        
+        document.getElementById('cnpClient').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                cautaInContracte();
+            }
+        });
+        
+        function switchTab(tab) {
+            const tabs = ['tabAudit', 'tabBirou', 'tabStocuri', 'tabCustodie', 'tabSolduri', 'tabRegistruCasa', 'tabOperatiuni'];
+            const panels = ['panelAudit', 'panelBirou', 'panelStocuri', 'panelCustodie', 'panelSolduri', 'panelRegistruCasa', 'panelOperatiuni'];
+            
+            tabs.forEach(t => {
+                const btn = document.getElementById(t);
+                if (!btn) return;
+                const tabName = 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1);
+                if (t === tabName || (tab === 'registrucasa' && t === 'tabRegistruCasa')) {
+                    btn.style.fontWeight = 'bold';
+                    btn.style.background = t === 'tabCustodie' ? '#9c27b0' : '#0078d4';
+                    btn.style.color = 'white';
+                } else {
+                    btn.style.fontWeight = 'normal';
+                    btn.style.background = 'linear-gradient(to bottom, #ffffff 0%, #dfdfdf 100%)';
+                    btn.style.color = 'black';
+                }
+            });
+            
+            panels.forEach(p => {
+                const panel = document.getElementById(p);
+                if (panel) panel.style.display = 'none';
+            });
+            
+            document.getElementById('stats').style.display = 'none';
+            
+            if (tab === 'audit') {
+                document.getElementById('panelAudit').style.display = 'flex';
+                document.getElementById('stats').style.display = document.getElementById('statTotal').textContent !== '0' ? 'flex' : 'none';
+            } else if (tab === 'birou') {
+                document.getElementById('panelBirou').style.display = 'flex';
+            } else if (tab === 'stocuri') {
+                document.getElementById('panelStocuri').style.display = 'flex';
+                document.getElementById('content').innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:12px;">Caută un produs sau vezi VALORI STOCURI pentru toate magazinele</div>';
+            } else if (tab === 'custodie') {
+                document.getElementById('panelCustodie').style.display = 'flex';
+                document.getElementById('content').innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:12px;">Click pe AFISEAZA GAJURI pentru a vedea toate gajurile în custodie</div>';
+            } else if (tab === 'solduri') {
+                document.getElementById('panelSolduri').style.display = 'flex';
+                document.getElementById('content').innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:12px;">Selectează data pentru a vedea soldurile tuturor magazinelor</div>';
+            } else if (tab === 'registrucasa') {
+                document.getElementById('panelRegistruCasa').style.display = 'flex';
+                document.getElementById('content').innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:12px;">Selectează magazinul și data pentru a afișa Registrul Casa</div>';
+            } else if (tab === 'operatiuni') {
+                document.getElementById('panelOperatiuni').style.display = 'flex';
+                document.getElementById('content').innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:12px;">Selectează magazinul și data pentru a afișa Operațiunile Amanet</div>';
+            }
+        }
+        
+        document.getElementById('cautareStoc').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                cautaStocuri();
+            }
+        });
+        
+        async function cautaInContracte() {
+            const cod = document.getElementById('codGaj').value.trim();
+            const client = document.getElementById('numeClient').value.trim();
+            const cnp = document.getElementById('cnpClient').value.trim();
+            
+            if (!cod && !client && !cnp) {
+                alert('Introdu un cod, nume client sau CNP!');
+                return;
+            }
+            
+            let criteriu = '';
+            if (cod) criteriu = `cod: ${cod}`;
+            else if (client) criteriu = `client: ${client}`;
+            else if (cnp) criteriu = `CNP: ${cnp}`;
+            
+            document.getElementById('statusBirou').textContent = 'Cautare in curs...';
+            document.getElementById('statusBirou').style.color = '#0078d4';
+            
+            try {
+                const response = await fetch(API_URL + '/birou/cauta', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cod, client, cnp })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const tipCautare = cod ? 'cod' : (client ? 'client' : 'cnp');
+                    document.getElementById('statusBirou').textContent = `Gasit ${result.rezultate.length} ${tipCautare === 'cod' ? 'gajuri' : 'contracte'}`;
+                    document.getElementById('statusBirou').style.color = '#28a745';
+                    
+                    ultimaListaContracte = result.rezultate;
+                    ultimCriteriuCautare = criteriu;
+                    ultimTipCautare = tipCautare;
+                    afiseazaListaContracte(result.rezultate, criteriu, tipCautare);
+                } else {
+                    document.getElementById('statusBirou').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusBirou').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusBirou').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusBirou').style.color = '#dc3545';
+            }
+        }
+        
+        function resetBirou() {
+            document.getElementById('codGaj').value = '';
+            document.getElementById('numeClient').value = '';
+            document.getElementById('cnpClient').value = '';
+            document.getElementById('statusBirou').textContent = '';
+            document.getElementById('content').innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:12px;">Caută după cod gaj, nume client sau CNP</div>';
+        }
+        
+        async function deschideDetaliiContract(magazin, nrContract) {
+            if (!nrContract || nrContract === '-') {
+                alert('Contract invalid!');
+                return;
+            }
+            
+            document.getElementById('statusBirou').textContent = 'Incarcare detalii contract...';
+            document.getElementById('statusBirou').style.color = '#0078d4';
+            
+            try {
+                const response = await fetch(API_URL + '/birou/detalii-contract', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ magazin, nrContract })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.contract) {
+                    document.getElementById('statusBirou').textContent = `Contract ${nrContract} - ${magazin}`;
+                    document.getElementById('statusBirou').style.color = '#28a745';
+                    afiseazaDetaliiContract(result.contract, magazin);
+                } else {
+                    document.getElementById('statusBirou').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusBirou').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusBirou').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusBirou').style.color = '#dc3545';
+            }
+        }
+        
+        function afiseazaDetaliiContract(contract, magazin) {
+            let html = '';
+            
+            const stareColor = contract.stare === 'derulare' ? '#155724' : 
+                              contract.stare === 'cesionat' ? '#856404' : 
+                              contract.stare === 'neonorat' ? '#721c24' : 
+                              contract.stare === 'onorat' ? '#0c5460' : '#000';
+            
+            const bgColor = contract.stare === 'derulare' ? '#d4edda' : 
+                           contract.stare === 'cesionat' ? '#fff3cd' : 
+                           contract.stare === 'neonorat' ? '#f8d7da' : 
+                           contract.stare === 'onorat' ? '#d1ecf1' : '#f0f9ff';
+            
+            const stareText = contract.stare === 'derulare' ? '🟢 ÎN DERULARE' : 
+                             contract.stare === 'cesionat' ? '🟠 CESIONAT' : 
+                             contract.stare === 'neonorat' ? '🔴 NEONORAT' : 
+                             contract.stare === 'onorat' ? '💰 ONORAT' : 
+                             contract.stare || 'NECUNOSCUT';
+            
+            html += `<div style="background:${bgColor}; border:3px solid ${stareColor}; padding:12px; margin-bottom:15px; border-radius:4px;">`;
+            
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:${stareColor}; margin:-12px -12px 10px -12px; padding:10px 12px; border-radius:2px 2px 0 0;">`;
+            html += `<h3 style="margin:0; font-size:14px; color:white;">📍 MAGAZIN: ${magazin} - CONTRACT: ${contract.nr_contract}</h3>`;
+            html += `<span style="font-weight:bold; color:white; font-size:13px;">${stareText}</span>`;
+            html += `</div>`;
+            
+            if (contract.stare === 'derulare') {
+                html += `<div style="background:#d4edda; border:3px solid #28a745; padding:12px; margin-bottom:10px; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">`;
+                html += `<div style="font-size:11px; font-weight:bold; color:#28a745; margin-bottom:8px;">🟢 CONTRACT ÎN DERULARE</div>`;
+                html += `<div style="font-size:13px; font-weight:bold; color:#000; margin-bottom:5px;">👤 CLIENT: ${contract.client}</div>`;
+                html += `<div style="font-size:11px; color:#666; line-height:1.6;">`;
+                if (contract.cnp) html += `📋 CNP: ${contract.cnp}<br>`;
+                if (contract.tel) html += `📞 Tel: ${contract.tel}<br>`;
+                html += `📄 Contract: <strong>${contract.nr_contract}</strong><br>`;
+                html += `📅 Data contract: <strong>${new Date(contract.data_contract).toLocaleDateString('ro-RO')}</strong>`;
+                if (contract.prelungiri > 0) {
+                    html += `<br>🔄 Prelungit de <strong style="color:#0078d4; font-size:12px;">${contract.prelungiri} ${contract.prelungiri === 1 ? 'oră' : 'ori'}</strong>`;
+                }
+                html += `</div>`;
+                html += `</div>`;
+            } else if (contract.stare === 'cesionat') {
+                html += `<div style="background:#fff3cd; border:3px solid #ffc107; padding:12px; margin-bottom:10px; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">`;
+                html += `<div style="font-size:11px; font-weight:bold; color:#856404; margin-bottom:8px;">🟠 CONTRACT CESIONAT</div>`;
+                if (contract.data_cesiune) {
+                    html += `<div style="font-size:12px; font-weight:bold; color:#000;">📅 Data cesionare: ${new Date(contract.data_cesiune).toLocaleDateString('ro-RO')}</div>`;
+                }
+                html += `<div style="font-size:11px; color:#666; margin-top:5px;">Contract: ${contract.nr_contract}</div>`;
+                html += `</div>`;
+            }
+            
+            if (contract.gajuri && contract.gajuri.length > 0) {
+                html += '<div style="background:white; padding:10px; border:2px solid #0078d4; margin-bottom:10px; border-radius:4px;">';
+                html += '<div style="font-weight:bold; color:#0078d4; margin-bottom:8px; font-size:12px;">📦 GAJURI (' + contract.gajuri.length + '):</div>';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                html += '<tr style="background:#e7f3ff;"><th style="padding:4px; border:1px solid #ddd;">Nr</th><th style="padding:4px; border:1px solid #ddd;">Cod</th><th style="padding:4px; border:1px solid #ddd;">Denumire</th><th style="padding:4px; border:1px solid #ddd;">UM</th><th style="padding:4px; border:1px solid #ddd;">Cant</th><th style="padding:4px; border:1px solid #ddd;">Pret</th><th style="padding:4px; border:1px solid #ddd;">Greutate</th><th style="padding:4px; border:1px solid #ddd;">Titlu</th></tr>';
+                contract.gajuri.forEach((gaj, idx) => {
+                    html += `<tr style="background:${idx % 2 === 0 ? '#fff' : '#f9f9f9'};">`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; font-weight:bold;">${gaj.cod}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd;">${gaj.denumire}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${gaj.um || '-'}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${gaj.cant || 1}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:right; font-weight:bold;">${(gaj.pret || 0).toFixed(2)} RON</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:right;">${gaj.greutate ? gaj.greutate + ' g' : '-'}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd;">${gaj.titlu || '-'}</td>`;
+                    html += '</tr>';
+                });
+                html += '</table></div>';
+            }
+            
+            html += '<div style="background:#e7f3ff; padding:10px; border:1px solid #0078d4; margin-bottom:8px;">';
+            html += '<div style="font-weight:bold; color:#0078d4; margin-bottom:5px; font-size:11px;">👤 INFORMATII CLIENT & CONTRACT:</div>';
+            html += '<table style="width:100%; font-size:11px;">';
+            html += `<tr><td style="padding:3px; font-weight:bold; width:150px;">Client:</td><td style="padding:3px; font-weight:bold; color:#000;">${contract.client}</td></tr>`;
+            html += `<tr><td style="padding:3px; font-weight:bold;">CNP:</td><td style="padding:3px;">${contract.cnp || '-'}</td></tr>`;
+            if (contract.adresa) {
+                html += `<tr><td style="padding:3px; font-weight:bold;">Adresa:</td><td style="padding:3px;">${contract.adresa}</td></tr>`;
+            }
+            if (contract.seria && contract.nr_ci) {
+                html += `<tr><td style="padding:3px; font-weight:bold;">CI:</td><td style="padding:3px;">Seria ${contract.seria} Nr. ${contract.nr_ci}</td></tr>`;
+            }
+            if (contract.tel) {
+                html += `<tr><td style="padding:3px; font-weight:bold;">Telefon:</td><td style="padding:3px;">${contract.tel}</td></tr>`;
+            }
+            html += `<tr><td colspan="2" style="padding:8px 3px 3px 3px;"><hr style="border:1px solid #ddd;"></td></tr>`;
+            html += `<tr><td style="padding:3px; font-weight:bold;">Nr. Contract:</td><td style="padding:3px; color:#0078d4; font-weight:bold;">${contract.nr_contract}</td></tr>`;
+            html += `<tr><td style="padding:3px; font-weight:bold;">Data Contract:</td><td style="padding:3px;">${new Date(contract.data_contract).toLocaleDateString('ro-RO')}</td></tr>`;
+            html += `<tr><td style="padding:3px; font-weight:bold;">Valoare Imprumut:</td><td style="padding:3px; color:#dc3545; font-weight:bold;">${contract.valoare.toFixed(2)} RON</td></tr>`;
+            html += `<tr><td style="padding:3px; font-weight:bold;">Durata:</td><td style="padding:3px;">${contract.durata} zile</td></tr>`;
+            
+            const nrPrelungiri = contract.prelungiri || 0;
+            const prelungiriColor = nrPrelungiri > 0 ? '#0078d4' : '#666';
+            const prelungiriText = nrPrelungiri === 0 ? 'Fara prelungiri' : 
+                                  nrPrelungiri === 1 ? '1 prelungire' : 
+                                  `${nrPrelungiri} prelungiri`;
+            html += `<tr><td style="padding:3px; font-weight:bold;">Prelungiri:</td><td style="padding:3px; color:${prelungiriColor}; font-weight:bold; font-size:12px;">`;
+            if (nrPrelungiri > 0) html += '🔄 ';
+            html += `${prelungiriText}</td></tr>`;
+            
+            if (contract.data_scadenta) {
+                const scadenta = new Date(contract.data_scadenta);
+                const azi = new Date();
+                const zileRamase = Math.ceil((scadenta - azi) / (1000 * 60 * 60 * 24));
+                const scadentaColor = zileRamase < 0 ? '#dc3545' : zileRamase < 7 ? '#ffc107' : '#28a745';
+                
+                html += `<tr><td style="padding:3px; font-weight:bold;">Data Scadenta:</td><td style="padding:3px; color:${scadentaColor}; font-weight:bold;">${scadenta.toLocaleDateString('ro-RO')}</td></tr>`;
+                html += `<tr><td style="padding:3px; font-weight:bold;">Zile ramase:</td><td style="padding:3px; color:${scadentaColor}; font-weight:bold;">${zileRamase} zile</td></tr>`;
+            }
+            
+            if (contract.compr) {
+                html += `<tr><td style="padding:3px; font-weight:bold;">Comision (%):</td><td style="padding:3px;">${contract.compr.toFixed(2)}%</td></tr>`;
+            }
+            if (contract.penpr) {
+                html += `<tr><td style="padding:3px; font-weight:bold;">Penalizare (%):</td><td style="padding:3px;">${contract.penpr.toFixed(2)}%</td></tr>`;
+            }
+            
+            html += '</table>';
+            
+            if (contract.prelungiri_detalii && contract.prelungiri_detalii.length > 0) {
+                html += '<details style="margin-top:8px;" open><summary style="cursor:pointer; font-size:11px; color:#0078d4; font-weight:bold;">📋 ISTORIC PRELUNGIRI (' + contract.prelungiri_detalii.length + ')</summary>';
+                html += '<div style="background:#f0f9ff; padding:8px; margin-top:5px; border:1px solid #c3e6ff; border-radius:4px;">';
+                html += '<table style="width:100%; font-size:10px; border-collapse:collapse;">';
+                html += '<tr style="background:#c3e6ff;"><th style="padding:4px; border:1px solid #ddd;">Nr</th><th style="padding:4px; border:1px solid #ddd;">Data & Ora</th><th style="padding:4px; border:1px solid #ddd;">Zile</th><th style="padding:4px; border:1px solid #ddd;">Comision Plătit</th><th style="padding:4px; border:1px solid #ddd;">Valoare Gaj</th></tr>';
+                contract.prelungiri_detalii.forEach((prel, idx) => {
+                    const dataStr = new Date(prel.data).toLocaleDateString('ro-RO');
+                    let oraStr = '';
+                    if (prel.ora) {
+                        const ora = new Date(prel.ora);
+                        oraStr = ' ' + ora.toLocaleTimeString('ro-RO', {hour: '2-digit', minute: '2-digit'});
+                    }
+                    
+                    html += `<tr style="background:${idx % 2 === 0 ? '#fff' : '#f9f9f9'};">`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:center; font-weight:bold;">${idx + 1}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd;"><strong>${dataStr}${oraStr}</strong></td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:center; color:#0078d4; font-weight:bold;">${prel.zile} zile</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; font-weight:bold; color:#28a745;">${(prel.comision || 0).toFixed(2)} RON</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; color:#666;">${(prel.valoare || 0).toFixed(2)} RON</td>`;
+                    html += '</tr>';
+                });
+                html += '</table></div></details>';
+            }
+            
+            if (contract.stare === 'cesionat' && contract.data_cesiune) {
+                html += '<div style="background:#fff3cd; border:2px solid #ffc107; padding:8px; margin-top:8px; border-radius:4px;">';
+                html += '<div style="font-size:11px; font-weight:bold; color:#856404;">⚠️ DATA CESIONARE:</div>';
+                html += `<div style="font-size:11px; color:#000; margin-top:3px; font-weight:bold;">${new Date(contract.data_cesiune).toLocaleDateString('ro-RO')}</div>`;
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            
+            html += '<div style="text-align:center; margin-top:15px;"><button onclick="inapoiLaLista()" style="padding:8px 20px; font-size:11px; cursor:pointer;">← ÎNAPOI LA LISTĂ</button></div>';
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function inapoiLaLista() {
+            if (ultimaListaContracte) {
+                afiseazaListaContracte(ultimaListaContracte, ultimCriteriuCautare, ultimTipCautare);
+                document.getElementById('statusBirou').textContent = `Gasit ${ultimaListaContracte.length} contracte`;
+                document.getElementById('statusBirou').style.color = '#28a745';
+            } else {
+                resetBirou();
+            }
+        }
+        
+        async function incarcaValoriStocuri() {
+            document.getElementById('statusStocuri').textContent = 'Incarcare valori stocuri...';
+            document.getElementById('statusStocuri').style.color = '#0078d4';
+            
+            try {
+                const response = await fetch(API_URL + '/stocuri/valori', {
+                    method: 'GET'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('statusStocuri').textContent = 'Valori stocuri incarcate';
+                    document.getElementById('statusStocuri').style.color = '#28a745';
+                    afiseazaValoriStocuri(result.magazine);
+                } else {
+                    document.getElementById('statusStocuri').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusStocuri').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusStocuri').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusStocuri').style.color = '#dc3545';
+            }
+        }
+        
+        async function cautaStocuri() {
+            const cautare = document.getElementById('cautareStoc').value.trim();
+            const magazin = document.getElementById('magazinStoc').value;
+            
+            if (!cautare) {
+                alert('Introdu cod sau denumire pentru cautare!');
+                return;
+            }
+            
+            document.getElementById('statusStocuri').textContent = 'Cautare in curs...';
+            document.getElementById('statusStocuri').style.color = '#0078d4';
+            
+            try {
+                const response = await fetch(API_URL + '/stocuri/cauta', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cautare, magazin })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const peStoc = result.peStoc || [];
+                    const faraStoc = result.faraStoc || [];
+                    document.getElementById('statusStocuri').textContent = `Gasit ${peStoc.length} pe stoc (verde), ${faraStoc.length} fara stoc (rosu)`;
+                    document.getElementById('statusStocuri').style.color = '#28a745';
+                    afiseazaRezultateStocuri(peStoc, faraStoc, cautare);
+                } else {
+                    document.getElementById('statusStocuri').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusStocuri').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusStocuri').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusStocuri').style.color = '#dc3545';
+            }
+        }
+        
+        function resetStocuri() {
+            document.getElementById('cautareStoc').value = '';
+            document.getElementById('magazinStoc').value = '';
+            document.getElementById('statusStocuri').textContent = '';
+            document.getElementById('content').innerHTML = '<div style="text-align:center; padding:40px; color:#666; font-size:12px;">Caută un produs sau vezi VALORI STOCURI</div>';
+        }
+        
+        function afiseazaRezultateStocuri(peStoc, faraStoc, cautare) {
+            let html = '';
+            
+            // Header
+            html += `<div style="background:#17a2b8; color:white; padding:12px; margin-bottom:15px; border:3px solid #117a8b;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">🔍 CAUTARE PRODUSE - "${cautare}"</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">`;
+            html += `<span style="color:#90EE90;">✅ ${peStoc.length} PE STOC</span> | `;
+            html += `<span style="color:#FFB6C1;">❌ ${faraStoc.length} FARA STOC</span>`;
+            html += `</div>`;
+            html += '</div>';
+            
+            // ========== VERDE - PE STOC ==========
+            if (peStoc.length > 0) {
+                html += `<div style="background:#d4edda; border:3px solid #28a745; padding:12px; margin-bottom:15px; border-radius:6px;">`;
+                html += `<h3 style="margin:0 0 10px 0; font-size:14px; color:#155724;">✅ PE STOC (${peStoc.length} produse)</h3>`;
+                
+                // Grupam pe magazine
+                const groupByMagazinVerde = {};
+                peStoc.forEach(item => {
+                    if (!groupByMagazinVerde[item.magazin]) {
+                        groupByMagazinVerde[item.magazin] = [];
+                    }
+                    groupByMagazinVerde[item.magazin].push(item);
+                });
+                
+                Object.keys(groupByMagazinVerde).sort().forEach(magazin => {
+                    const produse = groupByMagazinVerde[magazin];
+                    
+                    html += `<div style="background:#c3e6cb; border:2px solid #28a745; padding:8px; margin-bottom:10px; border-radius:4px;">`;
+                    html += `<h4 style="margin:0 0 8px 0; font-size:12px; color:#155724;">📍 ${magazin} - ${produse.length} produse</h4>`;
+                    
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white;">';
+                    html += '<tr style="background:#28a745; color:white; font-weight:bold;">';
+                    html += '<th style="padding:5px; border:1px solid #28a745;">Nr</th>';
+                    html += '<th style="padding:5px; border:1px solid #28a745;">Cod</th>';
+                    html += '<th style="padding:5px; border:1px solid #28a745;">Denumire</th>';
+                    html += '<th style="padding:5px; border:1px solid #28a745;">Gr</th>';
+                    html += '<th style="padding:5px; border:1px solid #28a745;">Stoc</th>';
+                    html += '<th style="padding:5px; border:1px solid #28a745;">Pret Intr.</th>';
+                    html += '<th style="padding:5px; border:1px solid #28a745;">Pret Vanz.</th>';
+                    html += '<th style="padding:5px; border:1px solid #28a745;">Data</th>';
+                    html += '</tr>';
+                    
+                    produse.forEach((item, idx) => {
+                        html += `<tr style="background:${idx % 2 === 0 ? '#f0fff0' : '#fff'};">`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; font-weight:bold;">${item.cod || ''}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd;">${item.denumire || ''}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${item.greutate > 0 ? item.greutate.toFixed(2) + 'g' : '-'}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#28a745;">${item.stoc}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:right;">${(item.pret_intrare || 0).toFixed(2)}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:right; font-weight:bold; color:#28a745;">${(item.pret_iesire || 0).toFixed(2)}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd;">${item.data ? new Date(item.data).toLocaleDateString('ro-RO') : '-'}</td>`;
+                        html += '</tr>';
+                    });
+                    
+                    html += '</table>';
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+            } else {
+                html += '<div style="background:#d4edda; padding:15px; border-left:4px solid #28a745; margin-bottom:15px;">';
+                html += '<strong style="color:#155724;">✅ PE STOC: Niciun produs gasit</strong>';
+                html += '</div>';
+            }
+            
+            // ========== ROSU - FARA STOC ==========
+            if (faraStoc.length > 0) {
+                html += `<div style="background:#f8d7da; border:3px solid #dc3545; padding:12px; margin-bottom:15px; border-radius:6px;">`;
+                html += `<h3 style="margin:0 0 10px 0; font-size:14px; color:#721c24;">❌ FARA STOC (${faraStoc.length} produse - vandute/iesite)</h3>`;
+                
+                // Grupam pe magazine
+                const groupByMagazinRosu = {};
+                faraStoc.forEach(item => {
+                    if (!groupByMagazinRosu[item.magazin]) {
+                        groupByMagazinRosu[item.magazin] = [];
+                    }
+                    groupByMagazinRosu[item.magazin].push(item);
+                });
+                
+                Object.keys(groupByMagazinRosu).sort().forEach(magazin => {
+                    const produse = groupByMagazinRosu[magazin];
+                    
+                    html += `<div style="background:#f5c6cb; border:2px solid #dc3545; padding:8px; margin-bottom:10px; border-radius:4px;">`;
+                    html += `<h4 style="margin:0 0 8px 0; font-size:12px; color:#721c24;">📍 ${magazin} - ${produse.length} produse</h4>`;
+                    
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white;">';
+                    html += '<tr style="background:#dc3545; color:white; font-weight:bold;">';
+                    html += '<th style="padding:5px; border:1px solid #dc3545;">Nr</th>';
+                    html += '<th style="padding:5px; border:1px solid #dc3545;">Cod</th>';
+                    html += '<th style="padding:5px; border:1px solid #dc3545;">Denumire</th>';
+                    html += '<th style="padding:5px; border:1px solid #dc3545;">Gr</th>';
+                    html += '<th style="padding:5px; border:1px solid #dc3545;">Stoc</th>';
+                    html += '<th style="padding:5px; border:1px solid #dc3545;">Pret Intr.</th>';
+                    html += '<th style="padding:5px; border:1px solid #dc3545;">Pret Vanz.</th>';
+                    html += '<th style="padding:5px; border:1px solid #dc3545;">Data</th>';
+                    html += '</tr>';
+                    
+                    produse.forEach((item, idx) => {
+                        html += `<tr style="background:${idx % 2 === 0 ? '#fff5f5' : '#fff'};">`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; font-weight:bold;">${item.cod || ''}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd;">${item.denumire || ''}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${item.greutate > 0 ? item.greutate.toFixed(2) + 'g' : '-'}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#dc3545;">0</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:right;">${(item.pret_intrare || 0).toFixed(2)}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd; text-align:right;">${(item.pret_iesire || 0).toFixed(2)}</td>`;
+                        html += `<td style="padding:3px; border:1px solid #ddd;">${item.data ? new Date(item.data).toLocaleDateString('ro-RO') : '-'}</td>`;
+                        html += '</tr>';
+                    });
+                    
+                    html += '</table>';
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function afiseazaValoriStocuri(magazine) {
+            let html = '';
+            
+            html += `<div style="background:#28a745; color:white; padding:12px; margin-bottom:15px; border:3px solid #1e7e34;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">📊 VALORI STOCURI - TOATE MAGAZINELE</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">${magazine.length} magazine</div>`;
+            html += '</div>';
+            
+            let totalIntrareGlobal = 0;
+            let totalIesireGlobal = 0;
+            let totalProduseGlobal = 0;
+            
+            html += '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white;">';
+            html += '<thead><tr style="background:#28a745; color:white; font-weight:bold;">';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Nr</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Magazin</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Nr Produse</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Total Pret Intrare</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Total Pret Ieșire</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Diferență</th>';
+            html += '</tr></thead><tbody>';
+            
+            magazine.forEach((mag, idx) => {
+                const diferenta = mag.total_iesire - mag.total_intrare;
+                const difeColor = diferenta > 0 ? '#28a745' : diferenta < 0 ? '#dc3545' : '#666';
+                
+                totalIntrareGlobal += mag.total_intrare;
+                totalIesireGlobal += mag.total_iesire;
+                totalProduseGlobal += mag.nr_produse;
+                
+                html += `<tr style="background:${idx % 2 === 0 ? '#f9f9f9' : '#fff'};">`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; font-weight:bold; color:#0078d4;">${mag.magazin}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:center; font-weight:bold;">${mag.nr_produse}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right; font-weight:bold;">${mag.total_intrare.toFixed(2)} RON</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right; font-weight:bold; color:#28a745;">${mag.total_iesire.toFixed(2)} RON</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right; font-weight:bold; color:${difeColor};">${diferenta.toFixed(2)} RON</td>`;
+                html += '</tr>';
+            });
+            
+            const difeGlobal = totalIesireGlobal - totalIntrareGlobal;
+            const difeGlobalColor = difeGlobal > 0 ? '#28a745' : difeGlobal < 0 ? '#dc3545' : '#666';
+            
+            html += `<tr style="background:#d4edda; font-weight:bold; font-size:12px;">`;
+            html += `<td colspan="2" style="padding:10px; border:1px solid #ddd; text-align:right;">TOTAL GENERAL:</td>`;
+            html += `<td style="padding:10px; border:1px solid #ddd; text-align:center; color:#000;">${totalProduseGlobal}</td>`;
+            html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#000;">${totalIntrareGlobal.toFixed(2)} RON</td>`;
+            html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#000;">${totalIesireGlobal.toFixed(2)} RON</td>`;
+            html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:${difeGlobalColor};">${difeGlobal.toFixed(2)} RON</td>`;
+            html += '</tr>';
+            
+            html += '</tbody></table>';
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function afiseazaListaContracte(rezultate, criteriu, tipCautare) {
+            let html = '';
+            
+            html += `<div style="background:#0078d4; color:white; padding:12px; margin-bottom:15px; border:3px solid #0060b0;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">📋 LISTA CONTRACTE - CĂUTARE: ${criteriu}</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">Găsit ${rezultate.length} ${rezultate.length === 1 ? 'contract' : 'contracte'}</div>`;
+            html += '</div>';
+            
+            if (rezultate.length === 0) {
+                html += '<div style="background:#fff3cd; padding:15px; border-left:4px solid #ffc107; text-align:center;">';
+                html += '<strong>Nu s-au găsit contracte pentru această căutare!</strong>';
+                html += '</div>';
+            } else {
+                const groupByMagazin = {};
+                rezultate.forEach(item => {
+                    if (!groupByMagazin[item.magazin]) {
+                        groupByMagazin[item.magazin] = [];
+                    }
+                    groupByMagazin[item.magazin].push(item);
+                });
+                
+                Object.keys(groupByMagazin).sort().forEach(magazin => {
+                    const contracte = groupByMagazin[magazin];
+                    
+                    html += `<div style="background:#f0f9ff; border:2px solid #0078d4; padding:12px; margin-bottom:15px; border-radius:4px;">`;
+                    html += `<h3 style="margin:0 0 10px 0; font-size:13px; color:#0078d4;">📍 MAGAZIN: ${magazin} - ${contracte.length} contracte</h3>`;
+                    
+                    html += '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white;">';
+                    html += '<thead><tr style="background:#0078d4; color:white; font-weight:bold;">';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Nr</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Contract</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Data Contract</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Client</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">CNP</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Data Scadenta</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Stare</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Valoare</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Prelungiri</th>';
+                    html += '<th style="padding:6px; border:1px solid #ddd;">Data Cesiune</th>';
+                    html += '</tr></thead><tbody>';
+                    
+                    contracte.forEach((item, idx) => {
+                        const stareColor = item.stare === 'derulare' ? '#d4edda' : 
+                                          item.stare === 'cesionat' ? '#fff3cd' : 
+                                          item.stare === 'neonorat' ? '#f8d7da' : 
+                                          item.stare === 'onorat' ? '#d1ecf1' : '#fff';
+                        
+                        const stareText = item.stare === 'derulare' ? 'DERULARE' : 
+                                         item.stare === 'cesionat' ? 'CESIONAT' : 
+                                         item.stare === 'neonorat' ? 'NEONORAT' : 
+                                         item.stare === 'onorat' ? 'ONORAT' : 'NECUNOSCUT';
+                        
+                        const nrContract = item.contract ? item.contract.nr_contract : '-';
+                        
+                        html += `<tr style="background:${stareColor}; cursor:pointer;" onclick='deschideDetaliiContract("${item.magazin}", "${nrContract}")' onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">`;
+                        html += `<td style="padding:4px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd; font-weight:bold; color:#0078d4;">${nrContract}</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd;">${item.contract ? new Date(item.contract.data_contract).toLocaleDateString('ro-RO') : '-'}</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd;">${item.contract ? item.contract.client : '-'}</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd;">${item.contract && item.contract.cnp ? item.contract.cnp : '-'}</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd;">${item.contract && item.contract.data_scadenta ? new Date(item.contract.data_scadenta).toLocaleDateString('ro-RO') : '-'}</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd; font-weight:bold; text-align:center;">${stareText}</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; font-weight:bold;">${item.contract ? item.contract.valoare.toFixed(2) : '0.00'} RON</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd; text-align:center;">${item.contract ? (item.contract.prelungiri || 0) : '0'}</td>`;
+                        html += `<td style="padding:4px; border:1px solid #ddd;">${item.contract && item.contract.data_cesiune ? new Date(item.contract.data_cesiune).toLocaleDateString('ro-RO') : '-'}</td>`;
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table>';
+                    html += '</div>';
+                });
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function afiseazaRezultateCod(rezultate, criteriu) {
+            let html = '';
+            
+            html += `<div style="background:#0078d4; color:white; padding:12px; margin-bottom:15px; border:3px solid #0060b0;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">📋 BIROU INFORMATII - CĂUTARE: ${criteriu}</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">Găsit ${rezultate.length} ${rezultate.length === 1 ? 'gaj' : 'gajuri'}</div>`;
+            html += '</div>';
+            
+            if (rezultate.length === 0) {
+                html += '<div style="background:#fff3cd; padding:15px; border-left:4px solid #ffc107; text-align:center;">';
+                html += '<strong>Nu s-au găsit gajuri cu acest cod în niciun contract!</strong>';
+                html += '</div>';
+            } else {
+                html += '<div style="background:#e7f3ff; border:2px solid #0078d4; padding:12px; margin-bottom:15px;">';
+                html += '<div style="font-weight:bold; font-size:12px; margin-bottom:8px; color:#0078d4;">📍 LOCATII UNDE A FOST GASIT CODUL:</div>';
+                html += '<div style="display:flex; flex-wrap:wrap; gap:8px;">';
+                
+                rezultate.forEach((item, idx) => {
+                    const stareColor = item.stare === 'derulare' ? '#28a745' : 
+                                      item.stare === 'cesionat' ? '#ffc107' : 
+                                      item.stare === 'neonorat' ? '#dc3545' : 
+                                      item.stare === 'onorat' ? '#17a2b8' : '#6c757d';
+                    
+                    const stareText = item.stare === 'derulare' ? 'DERULARE' : 
+                                     item.stare === 'cesionat' ? 'CESIONAT' : 
+                                     item.stare === 'neonorat' ? 'NEONORAT' : 
+                                     item.stare === 'onorat' ? 'ONORAT' : item.stare.toUpperCase();
+                    
+                    html += `<div style="background:white; border:2px solid ${stareColor}; padding:8px 12px; border-radius:4px; min-width:140px;">`;
+                    html += `<div style="font-weight:bold; font-size:13px; color:#000;">${item.magazin}</div>`;
+                    html += `<div style="font-size:10px; color:${stareColor}; font-weight:bold; margin-top:3px;">${stareText}</div>`;
+                    
+                    if (item.contract) {
+                        if (item.stare === 'derulare') {
+                            html += `<div style="font-size:10px; color:#000; margin-top:4px; font-weight:bold;">👤 ${item.contract.client}</div>`;
+                            if (item.contract.nr_contract) {
+                                html += `<div style="font-size:9px; color:#666; margin-top:2px;">Contract: ${item.contract.nr_contract}</div>`;
+                            }
+                            if (item.contract.prelungiri > 0) {
+                                html += `<div style="font-size:9px; color:#0078d4; margin-top:2px; font-weight:bold;">🔄 ${item.contract.prelungiri} prelungiri</div>`;
+                            }
+                        } else if (item.stare === 'cesionat' && item.contract.data_cesiune) {
+                            html += `<div style="font-size:9px; color:#856404; margin-top:3px; font-weight:bold;">Cesionat: ${new Date(item.contract.data_cesiune).toLocaleDateString('ro-RO')}</div>`;
+                        } else if (item.contract.client) {
+                            html += `<div style="font-size:9px; color:#999; margin-top:3px; font-style:italic;">Client: ${item.contract.client}</div>`;
+                        }
+                    }
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            if (rezultate.length > 0) {
+                rezultate.forEach((item, idx) => {
+                    const bgColor = item.stare === 'derulare' ? '#d4edda' : 
+                                   item.stare === 'cesionat' ? '#fff3cd' : 
+                                   item.stare === 'neonorat' ? '#f8d7da' : 
+                                   item.stare === 'onorat' ? '#d1ecf1' : '#f0f9ff';
+                    
+                    const stareColor = item.stare === 'derulare' ? '#155724' : 
+                                      item.stare === 'cesionat' ? '#856404' : 
+                                      item.stare === 'neonorat' ? '#721c24' : 
+                                      item.stare === 'onorat' ? '#0c5460' : '#000';
+                    
+                    const stareText = item.stare === 'derulare' ? '🟢 ÎN DERULARE' : 
+                                     item.stare === 'cesionat' ? '🟠 CESIONAT' : 
+                                     item.stare === 'neonorat' ? '🔴 NEONORAT' : 
+                                     item.stare === 'onorat' ? '💰 ONORAT' : 
+                                     item.stare || 'NECUNOSCUT';
+                    
+                    html += `<div style="background:${bgColor}; border:3px solid ${stareColor}; padding:12px; margin-bottom:15px; border-radius:4px;">`;
+                    
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:${stareColor}; margin:-12px -12px 10px -12px; padding:10px 12px; border-radius:2px 2px 0 0;">`;
+                    html += `<h3 style="margin:0; font-size:14px; color:white;">📍 MAGAZIN: ${item.magazin}</h3>`;
+                    html += `<span style="font-weight:bold; color:white; font-size:13px;">${stareText}</span>`;
+                    html += `</div>`;
+                    
+                    if (item.contract && item.stare === 'derulare') {
+                        const statusBgColor = '#d4edda';
+                        const statusBorder = '#28a745';
+                        const statusIcon = '🟢';
+                        const statusLabel = 'CONTRACT ÎN DERULARE';
+                        
+                        html += `<div style="background:${statusBgColor}; border:3px solid ${statusBorder}; padding:12px; margin-bottom:10px; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">`;
+                        html += `<div style="font-size:11px; font-weight:bold; color:${statusBorder}; margin-bottom:8px;">${statusIcon} ${statusLabel}</div>`;
+                        html += `<div style="font-size:13px; font-weight:bold; color:#000; margin-bottom:5px;">👤 CLIENT: ${item.contract.client}</div>`;
+                        html += `<div style="font-size:11px; color:#666; line-height:1.6;">`;
+                        if (item.contract.cnp) html += `📋 CNP: ${item.contract.cnp}<br>`;
+                        if (item.contract.tel) html += `📞 Tel: ${item.contract.tel}<br>`;
+                        html += `📄 Contract: <strong>${item.contract.nr_contract}</strong><br>`;
+                        html += `📅 Data contract: <strong>${new Date(item.contract.data_contract).toLocaleDateString('ro-RO')}</strong>`;
+                        if (item.contract.prelungiri > 0) {
+                            html += `<br>🔄 Prelungit de <strong style="color:#0078d4; font-size:12px;">${item.contract.prelungiri} ${item.contract.prelungiri === 1 ? 'oră' : 'ori'}</strong>`;
+                        }
+                        html += `</div>`;
+                        html += `</div>`;
+                    } else if (item.contract && item.stare === 'cesionat') {
+                        html += `<div style="background:#fff3cd; border:3px solid #ffc107; padding:12px; margin-bottom:10px; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">`;
+                        html += `<div style="font-size:11px; font-weight:bold; color:#856404; margin-bottom:8px;">🟠 CONTRACT CESIONAT</div>`;
+                        if (item.contract.data_cesiune) {
+                            html += `<div style="font-size:12px; font-weight:bold; color:#000;">📅 Data cesionare: ${new Date(item.contract.data_cesiune).toLocaleDateString('ro-RO')}</div>`;
+                        }
+                        html += `<div style="font-size:11px; color:#666; margin-top:5px;">Contract: ${item.contract.nr_contract}</div>`;
+                        html += `</div>`;
+                    }
+                    
+                    html += '<div style="background:white; padding:10px; border:1px solid #ddd; margin-bottom:8px;">';
+                    html += '<div style="font-weight:bold; color:#0078d4; margin-bottom:5px; font-size:11px;">📦 INFORMATII GAJ:</div>';
+                    html += '<table style="width:100%; font-size:11px;">';
+                    html += `<tr><td style="padding:3px; font-weight:bold; width:150px;">Cod:</td><td style="padding:3px; font-weight:bold; color:#0078d4;">${item.cod}</td></tr>`;
+                    html += `<tr><td style="padding:3px; font-weight:bold;">Denumire:</td><td style="padding:3px;">${item.denumire}</td></tr>`;
+                    if (item.um) html += `<tr><td style="padding:3px; font-weight:bold;">UM:</td><td style="padding:3px;">${item.um}</td></tr>`;
+                    html += `<tr><td style="padding:3px; font-weight:bold;">Cantitate:</td><td style="padding:3px;">${item.cantitate}</td></tr>`;
+                    html += `<tr><td style="padding:3px; font-weight:bold;">Pret:</td><td style="padding:3px; color:#dc3545; font-weight:bold;">${(item.pret || 0).toFixed(2)} RON</td></tr>`;
+                    if (item.greutate) html += `<tr><td style="padding:3px; font-weight:bold;">Greutate:</td><td style="padding:3px;">${item.greutate} g</td></tr>`;
+                    if (item.titlu) html += `<tr><td style="padding:3px; font-weight:bold;">Titlu:</td><td style="padding:3px;">${item.titlu}</td></tr>`;
+                    if (item.descriere) html += `<tr><td style="padding:3px; font-weight:bold;">Descriere:</td><td style="padding:3px;">${item.descriere}</td></tr>`;
+                    html += '</table>';
+                    html += '</div>';
+                    
+                    if (item.contract) {
+                        html += '<div style="background:#e7f3ff; padding:10px; border:1px solid #0078d4; margin-bottom:8px;">';
+                        html += '<div style="font-weight:bold; color:#0078d4; margin-bottom:5px; font-size:11px;">👤 INFORMATII CLIENT & CONTRACT:</div>';
+                        html += '<table style="width:100%; font-size:11px;">';
+                        html += `<tr><td style="padding:3px; font-weight:bold; width:150px;">Client:</td><td style="padding:3px; font-weight:bold; color:#000;">${item.contract.client}</td></tr>`;
+                        html += `<tr><td style="padding:3px; font-weight:bold;">CNP:</td><td style="padding:3px;">${item.contract.cnp || '-'}</td></tr>`;
+                        if (item.contract.adresa) {
+                            html += `<tr><td style="padding:3px; font-weight:bold;">Adresa:</td><td style="padding:3px;">${item.contract.adresa}</td></tr>`;
+                        }
+                        if (item.contract.seria && item.contract.nr_ci) {
+                            html += `<tr><td style="padding:3px; font-weight:bold;">CI:</td><td style="padding:3px;">Seria ${item.contract.seria} Nr. ${item.contract.nr_ci}</td></tr>`;
+                        }
+                        html += `<tr><td colspan="2" style="padding:8px 3px 3px 3px;"><hr style="border:1px solid #ddd;"></td></tr>`;
+                        html += `<tr><td style="padding:3px; font-weight:bold;">Nr. Contract:</td><td style="padding:3px; color:#0078d4; font-weight:bold;">${item.contract.nr_contract}</td></tr>`;
+                        html += `<tr><td style="padding:3px; font-weight:bold;">Data Contract:</td><td style="padding:3px;">${new Date(item.contract.data_contract).toLocaleDateString('ro-RO')}</td></tr>`;
+                        html += `<tr><td style="padding:3px; font-weight:bold;">Valoare Imprumut:</td><td style="padding:3px; color:#dc3545; font-weight:bold;">${item.contract.valoare.toFixed(2)} RON</td></tr>`;
+                        html += `<tr><td style="padding:3px; font-weight:bold;">Durata:</td><td style="padding:3px;">${item.contract.durata} zile</td></tr>`;
+                        
+                        const nrPrelungiri = item.contract.prelungiri || 0;
+                        const prelungiriColor = nrPrelungiri > 0 ? '#0078d4' : '#666';
+                        const prelungiriText = nrPrelungiri === 0 ? 'Fara prelungiri' : 
+                                              nrPrelungiri === 1 ? '1 prelungire' : 
+                                              `${nrPrelungiri} prelungiri`;
+                        html += `<tr><td style="padding:3px; font-weight:bold;">Prelungiri:</td><td style="padding:3px; color:${prelungiriColor}; font-weight:bold; font-size:12px;">`;
+                        if (nrPrelungiri > 0) html += '🔄 ';
+                        html += `${prelungiriText}</td></tr>`;
+                        
+                        if (item.contract.data_scadenta) {
+                            const scadenta = new Date(item.contract.data_scadenta);
+                            const azi = new Date();
+                            const zileRamase = Math.ceil((scadenta - azi) / (1000 * 60 * 60 * 24));
+                            const scadentaColor = zileRamase < 0 ? '#dc3545' : zileRamase < 7 ? '#ffc107' : '#28a745';
+                            
+                            html += `<tr><td style="padding:3px; font-weight:bold;">Data Scadenta:</td><td style="padding:3px; color:${scadentaColor}; font-weight:bold;">${scadenta.toLocaleDateString('ro-RO')}</td></tr>`;
+                            html += `<tr><td style="padding:3px; font-weight:bold;">Zile ramase:</td><td style="padding:3px; color:${scadentaColor}; font-weight:bold;">${zileRamase} zile</td></tr>`;
+                        }
+                        
+                        if (item.contract.compr) {
+                            html += `<tr><td style="padding:3px; font-weight:bold;">Comision (%):</td><td style="padding:3px;">${item.contract.compr.toFixed(2)}%</td></tr>`;
+                        }
+                        if (item.contract.penpr) {
+                            html += `<tr><td style="padding:3px; font-weight:bold;">Penalizare (%):</td><td style="padding:3px;">${item.contract.penpr.toFixed(2)}%</td></tr>`;
+                        }
+                        
+                        html += '</table>';
+                        
+                        if (item.contract.prelungiri_detalii && item.contract.prelungiri_detalii.length > 0) {
+                            html += '<details style="margin-top:8px;" open><summary style="cursor:pointer; font-size:11px; color:#0078d4; font-weight:bold;">📋 ISTORIC PRELUNGIRI (' + item.contract.prelungiri_detalii.length + ')</summary>';
+                            html += '<div style="background:#f0f9ff; padding:8px; margin-top:5px; border:1px solid #c3e6ff; border-radius:4px;">';
+                            html += '<table style="width:100%; font-size:10px; border-collapse:collapse;">';
+                            html += '<tr style="background:#c3e6ff;"><th style="padding:4px; border:1px solid #ddd;">Nr</th><th style="padding:4px; border:1px solid #ddd;">Data & Ora</th><th style="padding:4px; border:1px solid #ddd;">Zile</th><th style="padding:4px; border:1px solid #ddd;">Comision Plătit</th><th style="padding:4px; border:1px solid #ddd;">Valoare Gaj</th></tr>';
+                            item.contract.prelungiri_detalii.forEach((prel, idx) => {
+                                const dataStr = new Date(prel.data).toLocaleDateString('ro-RO');
+                                let oraStr = '';
+                                if (prel.ora) {
+                                    const ora = new Date(prel.ora);
+                                    oraStr = ' ' + ora.toLocaleTimeString('ro-RO', {hour: '2-digit', minute: '2-digit'});
+                                }
+                                
+                                html += `<tr style="background:${idx % 2 === 0 ? '#fff' : '#f9f9f9'};">`;
+                                html += `<td style="padding:3px; border:1px solid #ddd; text-align:center; font-weight:bold;">${idx + 1}</td>`;
+                                html += `<td style="padding:3px; border:1px solid #ddd;"><strong>${dataStr}${oraStr}</strong></td>`;
+                                html += `<td style="padding:3px; border:1px solid #ddd; text-align:center; color:#0078d4; font-weight:bold;">${prel.zile} zile</td>`;
+                                html += `<td style="padding:3px; border:1px solid #ddd; font-weight:bold; color:#28a745;">${(prel.comision || 0).toFixed(2)} RON</td>`;
+                                html += `<td style="padding:3px; border:1px solid #ddd; color:#666;">${(prel.valoare || 0).toFixed(2)} RON</td>`;
+                                html += '</tr>';
+                            });
+                            html += '</table></div></details>';
+                        }
+                        
+                        if (item.stare === 'cesionat' && item.contract.data_cesiune) {
+                            html += '<div style="background:#fff3cd; border:2px solid #ffc107; padding:8px; margin-top:8px; border-radius:4px;">';
+                            html += '<div style="font-size:11px; font-weight:bold; color:#856404;">⚠️ DATA CESIONARE:</div>';
+                            html += `<div style="font-size:11px; color:#000; margin-top:3px; font-weight:bold;">${new Date(item.contract.data_cesiune).toLocaleDateString('ro-RO')}</div>`;
+                            html += '</div>';
+                        }
+                        
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                });
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function toggleAudit() {
+            if (auditRunning) {
+                stopAudit();
+            } else {
+                startAudit();
+            }
+        }
+        
+        function stopAudit() {
+            console.log('STOP apăsat - anulare audit!');
+            
+            if (abortController) {
+                abortController.abort();
+            }
+            
+            if (loadingPanel && document.body.contains(loadingPanel)) {
+                document.body.removeChild(loadingPanel);
+            }
+            
+            auditRunning = false;
+            const btn = document.getElementById('btnAudit');
+            btn.textContent = 'START';
+            btn.style.background = 'linear-gradient(to bottom, #0078d4 0%, #0060b0 100%)';
+            
+            document.getElementById('status').textContent = 'Audit anulat de utilizator';
+            document.getElementById('status').style.color = '#ff6600';
+        }
+        
+        async function startAudit() {
+            console.log('START apăsat!');
+            
+            const dataStart = document.getElementById('dataStart').value;
+            const dataStop = document.getElementById('dataStop').value;
+            const magazinSursa = document.getElementById('magazinSursa').value;
+            const magazinDest = document.getElementById('magazinDest').value;
+            
+            console.log('Date selectate:', dataStart, dataStop);
+            console.log('Magazin sursa:', magazinSursa);
+            console.log('Magazin dest:', magazinDest);
+            
+            if (!dataStart || !dataStop) {
+                alert('Selecteaza ambele date!');
+                return;
+            }
+            
+            auditRunning = true;
+            const btn = document.getElementById('btnAudit');
+            btn.textContent = 'STOP';
+            btn.style.background = 'linear-gradient(to bottom, #dc3545 0%, #c82333 100%)';
+            
+            document.getElementById('status').textContent = '';
+            document.getElementById('stats').style.display = 'none';
+            
+            loadingPanel = document.createElement('div');
+            loadingPanel.className = 'loading-panel';
+            loadingPanel.innerHTML = `
+                <h2 style="margin-bottom:20px;">VERIFICARE ÎN CURS...</h2>
+                <div class="spinner"></div>
+                <div class="progress-text">Se citesc bazele de date...</div>
+                <div id="progressInfo" style="font-size:11px; color:#666; margin-top:10px;">
+                    Magazin sursa: ${magazinSursa || 'TOATE'}<br>
+                    Magazin destinatie: ${magazinDest || 'TOATE'}<br>
+                    Perioada: ${dataStart} - ${dataStop}
+                </div>
+            `;
+            document.body.appendChild(loadingPanel);
+            
+            abortController = new AbortController();
+            
+            try {
+                console.log('Trimit request la API...');
+                
+                const response = await fetch(API_URL + '/audit/verificare', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        dataStart, 
+                        dataStop,
+                        magazinSursa,
+                        magazinDest
+                    }),
+                    signal: abortController.signal
+                });
+                
+                console.log('Raspuns primit:', response.status);
+                
+                const result = await response.json();
+                console.log('Date:', result);
+                
+                if (document.body.contains(loadingPanel)) {
+                    document.body.removeChild(loadingPanel);
+                }
+                
+                auditRunning = false;
+                btn.textContent = 'START';
+                btn.style.background = 'linear-gradient(to bottom, #0078d4 0%, #0060b0 100%)';
+                
+                if (result.success) {
+                    afiseazaRezultate(result);
+                } else {
+                    document.getElementById('status').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('status').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                
+                if (document.body.contains(loadingPanel)) {
+                    document.body.removeChild(loadingPanel);
+                }
+                
+                auditRunning = false;
+                btn.textContent = 'START';
+                btn.style.background = 'linear-gradient(to bottom, #0078d4 0%, #0060b0 100%)';
+                
+                if (error.name === 'AbortError') {
+                    document.getElementById('status').textContent = 'Audit anulat de utilizator';
+                    document.getElementById('status').style.color = '#ff6600';
+                } else {
+                    document.getElementById('status').textContent = 'Eroare: ' + error.message;
+                    document.getElementById('status').style.color = '#dc3545';
+                }
+            }
+        }
+        
+        function afiseazaRezultate(data) {
+            ultimeleRezultate = data;
+            
+            document.getElementById('status').textContent = 'Audit finalizat!';
+            document.getElementById('status').style.color = '#28a745';
+            document.getElementById('stats').style.display = 'flex';
+            
+            document.getElementById('btnPrint').style.display = 'inline-block';
+            document.getElementById('btnPDF').style.display = 'inline-block';
+            
+            document.getElementById('statGasite').textContent = data.gasite.length;
+            document.getElementById('statPosibile').textContent = data.posibile ? data.posibile.length : 0;
+            document.getElementById('statTranzit').textContent = data.inTranzit.length;
+            document.getElementById('statPierdute').textContent = data.pierdute.length;
+            document.getElementById('statRezolvate').textContent = data.rezolvateManual ? data.rezolvateManual.length : 0;
+            document.getElementById('statTotal').textContent = data.iesiri_totale;
+            
+            let html = '';
+            
+            // === REZOLVATE MANUAL ===
+            if (data.rezolvateManual && data.rezolvateManual.length > 0) {
+                html += '<div style="background:#6c757d; color:white; padding:12px; margin-bottom:15px; border:3px solid #495057;">';
+                html += `<h2 style="margin:0 0 10px 0; font-size:14px;">✅ REZOLVATE MANUAL (${data.rezolvateManual.length})</h2>`;
+                html += '<div style="background:white; color:#000; padding:8px;">';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                html += '<tr style="background:#e9ecef; font-weight:bold;"><td style="padding:4px; border:1px solid #ddd;">Nr</td><td style="padding:4px; border:1px solid #ddd;">Magazin</td><td style="padding:4px; border:1px solid #ddd;">Cod</td><td style="padding:4px; border:1px solid #ddd;">Denumire</td><td style="padding:4px; border:1px solid #ddd;">Preț</td><td style="padding:4px; border:1px solid #ddd;">Destinație</td><td style="padding:4px; border:1px solid #ddd;">Explicație</td></tr>';
+                
+                data.rezolvateManual.forEach((p, idx) => {
+                    html += `<tr style="background:${idx % 2 === 0 ? '#f8f9fa' : '#fff'};">
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${idx + 1}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${p.magazin_sursa}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${p.cod}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${p.denumire}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${(p.pret_iesire || 0).toFixed(2)} RON</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd; font-weight:bold; color:#28a745;">${p.destinatie_manuala}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd; font-style:italic;">${p.explicatie_manuala || ''}</td>
+                    </tr>`;
+                });
+                
+                html += '</table></div></div>';
+            }
+            
+            // === PIERDUTE (cu optiune de rezolvare) ===
+            if (data.pierdute.length > 0) {
+                html += '<div style="background:#ff4444; color:white; padding:12px; margin-bottom:15px; border:3px solid #cc0000;">';
+                html += `<h2 style="margin:0 0 10px 0; font-size:14px;">🚨 PRODUSE PIERDUTE (${data.pierdute.length}) - Bifează și scrie destinația!</h2>`;
+                html += '<div style="background:#fff3cd; color:#856404; padding:8px; margin-bottom:8px; font-size:11px;">';
+                html += '💡 <strong>Selectează produsele</strong>, scrie <strong>destinația</strong> și apasă <strong>SALVEAZĂ</strong> pentru a le marca ca rezolvate.';
+                html += '</div>';
+                html += '<div style="background:white; color:#000; padding:8px;">';
+                html += '<div style="margin-bottom:8px;">';
+                html += '<input type="text" id="destinatieRezolvare" placeholder="Scrie destinația (ex: vandut la gara, transferat la M2, pierdut)" style="width:300px; padding:6px; font-size:12px; border:1px solid #ccc; margin-right:8px;">';
+                html += '<input type="text" id="explicatieRezolvare" placeholder="Explicație (opțional)" style="width:200px; padding:6px; font-size:12px; border:1px solid #ccc; margin-right:8px;">';
+                html += '<button onclick="rezolvaProduseBifate()" style="padding:6px 15px; font-size:12px; background:#28a745; color:white; border:none; cursor:pointer;">✓ SALVEAZĂ SELECTATE</button>';
+                html += '<button onclick="selecteazaToatePierdute()" style="padding:6px 10px; font-size:11px; background:#6c757d; color:white; border:none; cursor:pointer; margin-left:5px;">Selectează tot</button>';
+                html += '</div>';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                html += '<tr style="background:#ffcccc; font-weight:bold;"><td style="padding:4px; border:1px solid #ddd; width:30px;">☐</td><td style="padding:4px; border:1px solid #ddd;">Nr</td><td style="padding:4px; border:1px solid #ddd;">Magazin</td><td style="padding:4px; border:1px solid #ddd;">Cod</td><td style="padding:4px; border:1px solid #ddd;">Denumire</td><td style="padding:4px; border:1px solid #ddd;">Preț</td><td style="padding:4px; border:1px solid #ddd;">Data</td><td style="padding:4px; border:1px solid #ddd;">Zile</td></tr>';
+                
+                data.pierdute.forEach((p, idx) => {
+                    const dataJson = JSON.stringify(p).replace(/"/g, '&quot;');
+                    html += `<tr style="background:${idx % 2 === 0 ? '#ffe0e0' : '#fff'};" class="pierdut-row">
+                        <td style="padding:3px 6px; border:1px solid #ddd; text-align:center;">
+                            <input type="checkbox" class="pierdut-checkbox" data-produs='${dataJson}'>
+                        </td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${idx + 1}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd; font-weight:bold;">${p.magazin_sursa}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${p.cod}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${p.denumire}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd; font-weight:bold;">${(p.pret_iesire || 0).toFixed(2)} RON</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${new Date(p.data).toLocaleDateString('ro-RO')}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd; color:#dc3545; font-weight:bold;">${p.zile} zile</td>
+                    </tr>`;
+                });
+                
+                html += '</table></div></div>';
+            } else {
+                html += '<div style="background:#d4edda; padding:10px; margin-bottom:15px; border:2px solid #28a745; text-align:center; font-size:12px;">';
+                html += '<strong style="color:#155724;">✅ Nu sunt produse pierdute în perioada selectată!</strong>';
+                html += '</div>';
+            }
+            
+            if (data.posibile && data.posibile.length > 0) {
+                html += '<div style="background:#fd7e14; color:white; padding:12px; margin-bottom:15px; border:3px solid #dc6a00;">';
+                html += `<h2 style="margin:0 0 10px 0; font-size:14px;">🔍 POSIBILE POTRIVIRI (${data.posibile.length}) - Verifică manual codul!</h2>`;
+                html += '<div style="background:white; color:#000; padding:8px;">';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:10px;">';
+                html += '<tr style="background:#ffe0c0; font-weight:bold;">';
+                html += '<td style="padding:4px; border:1px solid #ddd;">Nr</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">Din Magazin</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">Cod Orig</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">Denumire</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">→</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">În Magazin</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">Cod Dest</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">Preț</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">Scor</td>';
+                html += '<td style="padding:4px; border:1px solid #ddd;">Potrivire</td>';
+                html += '</tr>';
+                
+                data.posibile.forEach((p, idx) => {
+                    html += `<tr style="background:${idx % 2 === 0 ? '#fff5e6' : '#fff'};">
+                        <td style="padding:3px; border:1px solid #ddd;">${idx + 1}</td>
+                        <td style="padding:3px; border:1px solid #ddd; font-weight:bold;">${p.magazin_sursa}</td>
+                        <td style="padding:3px; border:1px solid #ddd; color:#dc3545; font-weight:bold;">${p.cod}</td>
+                        <td style="padding:3px; border:1px solid #ddd;">${p.denumire}</td>
+                        <td style="padding:3px; border:1px solid #ddd; text-align:center;">→</td>
+                        <td style="padding:3px; border:1px solid #ddd; font-weight:bold; color:#28a745;">${p.magazin_destinatie}</td>
+                        <td style="padding:3px; border:1px solid #ddd; color:#28a745; font-weight:bold;">${p.cod_destinatie || '-'}</td>
+                        <td style="padding:3px; border:1px solid #ddd; font-weight:bold;">${p.pret_iesire.toFixed(2)}</td>
+                        <td style="padding:3px; border:1px solid #ddd; color:#fd7e14; font-weight:bold;">${p.match_score}%</td>
+                        <td style="padding:3px; border:1px solid #ddd; font-size:9px;">${p.match_details || ''}</td>
+                    </tr>`;
+                });
+                
+                html += '</table></div></div>';
+            }
+            
+            if (data.inTranzit.length > 0) {
+                html += '<div style="background:#fff3cd; padding:12px; border-left:4px solid #ffc107; margin-bottom:15px;">';
+                html += `<h3 style="color:#856404; margin:0 0 8px 0; font-size:13px;">⏳ ÎN TRANZIT (${data.inTranzit.length}) - Plecare recentă (mai puțin de 7 zile):</h3>`;
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white;">';
+                html += '<tr style="background:#ffe4a0; font-weight:bold;"><td style="padding:4px; border:1px solid #ddd;">Nr</td><td style="padding:4px; border:1px solid #ddd;">Magazin</td><td style="padding:4px; border:1px solid #ddd;">Cod</td><td style="padding:4px; border:1px solid #ddd;">Denumire</td><td style="padding:4px; border:1px solid #ddd;">Preț</td><td style="padding:4px; border:1px solid #ddd;">Data</td><td style="padding:4px; border:1px solid #ddd;">Zile</td></tr>';
+                
+                data.inTranzit.forEach((p, idx) => {
+                    html += `<tr style="background:${idx % 2 === 0 ? '#fffbf0' : '#fff'};">
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${idx + 1}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd; font-weight:bold;">${p.magazin_sursa}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${p.cod}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${p.denumire}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${p.pret_iesire.toFixed(2)} RON</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd;">${new Date(p.data).toLocaleDateString('ro-RO')}</td>
+                        <td style="padding:3px 6px; border:1px solid #ddd; color:#856404;">${p.zile} zile</td>
+                    </tr>`;
+                });
+                
+                html += '</table></div>';
+            }
+            
+            if (data.gasite.length > 0) {
+                html += '<details style="background:#d4edda; padding:10px; margin-bottom:15px; border:2px solid #28a745;">';
+                html += `<summary style="cursor:pointer; font-weight:bold; color:#155724; font-size:12px;">
+                    ✅ TRANSFERURI COMPLETE (${data.gasite.length}) - click pentru detalii
+                </summary>`;
+                html += '<div style="margin-top:8px; max-height:400px; overflow-y:auto;">';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:10px; background:white;">';
+                html += '<tr style="background:#c3e6cb; font-weight:bold;"><td style="padding:3px; border:1px solid #ddd;">Nr</td><td style="padding:3px; border:1px solid #ddd;">Din</td><td style="padding:3px; border:1px solid #ddd;">În</td><td style="padding:3px; border:1px solid #ddd;">Cod</td><td style="padding:3px; border:1px solid #ddd;">Denumire</td><td style="padding:3px; border:1px solid #ddd;">Preț</td><td style="padding:3px; border:1px solid #ddd;">Data</td></tr>';
+                
+                data.gasite.forEach((p, idx) => {
+                    html += `<tr style="background:${idx % 2 === 0 ? '#f0f9f0' : '#fff'};">
+                        <td style="padding:2px 4px; border:1px solid #ddd;">${idx + 1}</td>
+                        <td style="padding:2px 4px; border:1px solid #ddd;">${p.magazin_sursa}</td>
+                        <td style="padding:2px 4px; border:1px solid #ddd;">${p.magazin_destinatie}</td>
+                        <td style="padding:2px 4px; border:1px solid #ddd;">${p.cod}</td>
+                        <td style="padding:2px 4px; border:1px solid #ddd;">${p.denumire}</td>
+                        <td style="padding:2px 4px; border:1px solid #ddd;">${p.pret_iesire.toFixed(2)}</td>
+                        <td style="padding:2px 4px; border:1px solid #ddd;">${new Date(p.data).toLocaleDateString('ro-RO')}</td>
+                    </tr>`;
+                });
+                
+                html += '</table></div></details>';
+            }
+            
+            if (data.pierdute.length === 0 && data.inTranzit.length === 0 && data.gasite.length === 0) {
+                html = '<div style="text-align:center; padding:40px; color:#666; font-size:12px;">Nu au fost găsite transferuri în perioada selectată.</div>';
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function printRaport() {
+            if (!ultimeleRezultate) {
+                alert('Nu exista date pentru listare!');
+                return;
+            }
+            
+            const magazinSursa = document.getElementById('magazinSursa').value;
+            const magazinDest = document.getElementById('magazinDest').value;
+            const dataStart = document.getElementById('dataStart').value;
+            const dataStop = document.getElementById('dataStop').value;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Raport Audit Transferuri</title>
+                    <style>
+                        body { font-family: Arial; margin: 20px; }
+                        h1 { text-align: center; font-size: 18px; }
+                        .info { margin: 20px 0; font-size: 12px; }
+                        .info strong { display: inline-block; width: 150px; }
+                        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 11px; }
+                        th, td { border: 1px solid #000; padding: 5px; text-align: left; }
+                        th { background: #e0e0e0; font-weight: bold; }
+                        .pierdute th { background: #ffcccc; }
+                        .tranzit th { background: #ffe4a0; }
+                        .gasite th { background: #c3e6cb; }
+                        .section-title { font-size: 14px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; }
+                        .pierdute-title { color: #dc3545; }
+                        .tranzit-title { color: #856404; }
+                        .gasite-title { color: #155724; }
+                        @media print {
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>RAPORT AUDIT TRANSFERURI INTER-MAGAZINE</h1>
+                    <div class="info">
+                        <div><strong>Transfer DIN:</strong> ${magazinSursa}</div>
+                        <div><strong>Transfer SPRE:</strong> ${magazinDest || 'TOATE'}</div>
+                        <div><strong>Perioada:</strong> ${new Date(dataStart).toLocaleDateString('ro-RO')} - ${new Date(dataStop).toLocaleDateString('ro-RO')}</div>
+                        <div><strong>Data raport:</strong> ${new Date().toLocaleDateString('ro-RO')} ${new Date().toLocaleTimeString('ro-RO')}</div>
+                    </div>
+                    <div class="info">
+                        <div><strong>Total iesiri:</strong> ${ultimeleRezultate.iesiri_totale}</div>
+                        <div><strong>Pierdute:</strong> ${ultimeleRezultate.pierdute.length}</div>
+                        <div><strong>In tranzit:</strong> ${ultimeleRezultate.inTranzit.length}</div>
+                        <div><strong>Complete:</strong> ${ultimeleRezultate.gasite.length}</div>
+                    </div>
+                    ${generareHTMLRaport()}
+                    <div class="no-print" style="text-align:center; margin-top:30px;">
+                        <button onclick="window.print()" style="padding:10px 30px; font-size:14px; cursor:pointer;">PRINTEAZA</button>
+                        <button onclick="window.close()" style="padding:10px 30px; font-size:14px; cursor:pointer; margin-left:10px;">INCHIDE</button>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+        
+        function salveazaPDF() {
+            if (!ultimeleRezultate) {
+                alert('Nu exista date pentru salvare!');
+                return;
+            }
+            
+            const magazinSursa = document.getElementById('magazinSursa').value;
+            const magazinDest = document.getElementById('magazinDest').value || 'TOATE';
+            const dataStart = document.getElementById('dataStart').value;
+            
+            const numeFisier = `Audit_${magazinSursa}_catre_${magazinDest}_${dataStart}.pdf`;
+            
+            alert('Pentru salvare PDF:\n\n1. Apasa LISTARE\n2. In fereastra care se deschide apasa CTRL+P\n3. Alege "Salveaza ca PDF" ca destinatie\n4. Salveaza fisierul\n\nSau foloseste o biblioteca dedicata PDF (ex: jsPDF)');
+            
+            printRaport();
+        }
+        
+        function generareHTMLRaport() {
+            let html = '';
+            
+            if (ultimeleRezultate.pierdute.length > 0) {
+                html += '<div class="section-title pierdute-title">PRODUSE PIERDUTE (' + ultimeleRezultate.pierdute.length + ')</div>';
+                html += '<table class="pierdute"><thead><tr>';
+                html += '<th>Nr</th><th>Magazin</th><th>Cod</th><th>Denumire</th><th>Pret</th><th>Data</th><th>Zile</th>';
+                html += '</tr></thead><tbody>';
+                
+                ultimeleRezultate.pierdute.forEach((p, idx) => {
+                    html += `<tr>
+                        <td>${idx + 1}</td>
+                        <td>${p.magazin_sursa}</td>
+                        <td>${p.cod}</td>
+                        <td>${p.denumire}</td>
+                        <td>${p.pret_iesire.toFixed(2)} RON</td>
+                        <td>${new Date(p.data).toLocaleDateString('ro-RO')}</td>
+                        <td>${p.zile} zile</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+            }
+            
+            if (ultimeleRezultate.inTranzit.length > 0) {
+                html += '<div class="section-title tranzit-title">PRODUSE IN TRANZIT (' + ultimeleRezultate.inTranzit.length + ')</div>';
+                html += '<table class="tranzit"><thead><tr>';
+                html += '<th>Nr</th><th>Magazin</th><th>Cod</th><th>Denumire</th><th>Pret</th><th>Data</th><th>Zile</th>';
+                html += '</tr></thead><tbody>';
+                
+                ultimeleRezultate.inTranzit.forEach((p, idx) => {
+                    html += `<tr>
+                        <td>${idx + 1}</td>
+                        <td>${p.magazin_sursa}</td>
+                        <td>${p.cod}</td>
+                        <td>${p.denumire}</td>
+                        <td>${p.pret_iesire.toFixed(2)} RON</td>
+                        <td>${new Date(p.data).toLocaleDateString('ro-RO')}</td>
+                        <td>${p.zile} zile</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+            }
+            
+            if (ultimeleRezultate.gasite.length > 0) {
+                html += '<div class="section-title gasite-title">TRANSFERURI COMPLETE (' + ultimeleRezultate.gasite.length + ')</div>';
+                html += '<table class="gasite"><thead><tr>';
+                html += '<th>Nr</th><th>Din</th><th>In</th><th>Cod</th><th>Denumire</th><th>Pret</th><th>Data</th>';
+                html += '</tr></thead><tbody>';
+                
+                ultimeleRezultate.gasite.forEach((p, idx) => {
+                    html += `<tr>
+                        <td>${idx + 1}</td>
+                        <td>${p.magazin_sursa}</td>
+                        <td>${p.magazin_destinatie}</td>
+                        <td>${p.cod}</td>
+                        <td>${p.denumire}</td>
+                        <td>${p.pret_iesire.toFixed(2)} RON</td>
+                        <td>${new Date(p.data).toLocaleDateString('ro-RO')}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+            }
+            
+            return html;
+        }
+        async function incarcaRegistruCasa() {
+            const magazin = document.getElementById('magazinCasa').value;
+            const data = document.getElementById('dataCasa').value;
+            
+            if (!data) {
+                alert('Selectează data!');
+                return;
+            }
+            
+            document.getElementById('statusCasa').textContent = 'Incarcare registru casa...';
+            document.getElementById('statusCasa').style.color = '#0078d4';
+            
+            try {
+                const response = await fetch(API_URL + '/registru-casa', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ magazin, data })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('statusCasa').textContent = `Registru Casa - ${magazin} - ${new Date(data).toLocaleDateString('ro-RO')}`;
+                    document.getElementById('statusCasa').style.color = '#28a745';
+                    ultimulRegistru = result.registru;
+                    ultimulMagazinCasa = magazin;
+                    ultimaDataCasa = data;
+                    afiseazaRegistruCasa(result.registru, magazin, data);
+                } else {
+                    document.getElementById('statusCasa').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusCasa').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusCasa').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusCasa').style.color = '#dc3545';
+            }
+        }
+        
+        async function incarcaOperatiuni() {
+            const magazin = document.getElementById('magazinOperatiuni').value;
+            const data = document.getElementById('dataOperatiuni').value;
+            
+            if (!data) {
+                alert('Selectează data!');
+                return;
+            }
+            
+            document.getElementById('statusOperatiuni').textContent = 'Incarcare operatiuni...';
+            document.getElementById('statusOperatiuni').style.color = '#0078d4';
+            
+            try {
+                const response = await fetch(API_URL + '/operatiuni-amanet', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ magazin, data })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('statusOperatiuni').textContent = `Operatiuni Amanet - ${magazin} - ${new Date(data).toLocaleDateString('ro-RO')}`;
+                    document.getElementById('statusOperatiuni').style.color = '#28a745';
+                    ultimeOperatiuni = result.operatiuni;
+                    ultimulMagazinOperatiuni = magazin;
+                    ultimaDataOperatiuni = data;
+                    afiseazaOperatiuni(result.operatiuni, magazin, data);
+                } else {
+                    document.getElementById('statusOperatiuni').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusOperatiuni').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusOperatiuni').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusOperatiuni').style.color = '#dc3545';
+            }
+        }
+        
+        // ========================================
+        // GAJURI IN CUSTODIE
+        // ========================================
+        async function incarcaGajuriCustodie() {
+            const magazin = document.getElementById('magazinCustodie').value;
+            
+            document.getElementById('statusCustodie').textContent = 'Incarcare gajuri in custodie...';
+            document.getElementById('statusCustodie').style.color = '#9c27b0';
+            
+            try {
+                const response = await fetch(API_URL + '/gajuri-custodie');
+                const result = await response.json();
+                
+                if (result.success) {
+                    let filtrate = result.magazine;
+                    if (magazin) {
+                        filtrate = result.magazine.filter(m => m.magazin === magazin);
+                    }
+                    
+                    document.getElementById('statusCustodie').textContent = `Total: ${result.totaluri.contracte} contracte, ${result.totaluri.gajuri} gajuri, ${result.totaluri.valoare.toFixed(2)} RON`;
+                    document.getElementById('statusCustodie').style.color = '#28a745';
+                    afiseazaGajuriCustodie(filtrate, result.totaluri, magazin);
+                } else {
+                    document.getElementById('statusCustodie').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusCustodie').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusCustodie').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusCustodie').style.color = '#dc3545';
+            }
+        }
+        
+        // Cautare IMEI/Serie
+        async function cautaIMEI() {
+            const cautare = document.getElementById('cautareIMEI').value.trim();
+            
+            if (!cautare || cautare.length < 3) {
+                alert('Introdu minim 3 caractere pentru cautare!');
+                return;
+            }
+            
+            document.getElementById('statusCustodie').textContent = 'Cautare in curs...';
+            document.getElementById('statusCustodie').style.color = '#e91e63';
+            
+            try {
+                const response = await fetch(API_URL + '/gajuri-custodie/cauta', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cautare })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('statusCustodie').textContent = `Gasit: ${result.pe_stoc} pe stoc, ${result.istoric} istoric`;
+                    document.getElementById('statusCustodie').style.color = '#28a745';
+                    afiseazaRezultateCautareIMEI(result.rezultate, cautare, result.pe_stoc, result.istoric);
+                } else {
+                    document.getElementById('statusCustodie').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusCustodie').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusCustodie').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusCustodie').style.color = '#dc3545';
+            }
+        }
+        
+        function afiseazaRezultateCautareIMEI(rezultate, cautare, peStocCount, istoricCount) {
+            let html = '';
+            
+            html += `<div style="background:#e91e63; color:white; padding:12px; margin-bottom:15px; border:3px solid #c2185b;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">🔍 CAUTARE IMEI/SERIE: "${cautare}"</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">`;
+            html += `<span style="color:#90EE90;">✅ ${peStocCount} PE STOC</span> | `;
+            html += `<span style="color:#FFB6C1;">📜 ${istoricCount} ISTORIC</span>`;
+            html += `</div>`;
+            html += '</div>';
+            
+            if (rezultate.length === 0) {
+                html += '<div style="background:#fff3cd; padding:15px; border-left:4px solid #ffc107; text-align:center;">';
+                html += '<strong>Nu s-a gasit nimic cu aceasta cautare!</strong>';
+                html += '</div>';
+            } else {
+                // PE STOC (verde)
+                const peStoc = rezultate.filter(r => r.pe_stoc);
+                if (peStoc.length > 0) {
+                    html += `<div style="background:#d4edda; border:3px solid #28a745; padding:12px; margin-bottom:15px; border-radius:6px;">`;
+                    html += `<h3 style="margin:0 0 10px 0; font-size:14px; color:#155724;">✅ PE STOC ACUM (${peStoc.length})</h3>`;
+                    html += afiseazaTabelIMEI(peStoc, true);
+                    html += '</div>';
+                }
+                
+                // ISTORIC (gri)
+                const istoric = rezultate.filter(r => !r.pe_stoc);
+                if (istoric.length > 0) {
+                    html += `<div style="background:#e9ecef; border:3px solid #6c757d; padding:12px; margin-bottom:15px; border-radius:6px;">`;
+                    html += `<h3 style="margin:0 0 10px 0; font-size:14px; color:#495057;">📜 ISTORIC (a fost in stoc) - ${istoric.length}</h3>`;
+                    html += afiseazaTabelIMEI(istoric, false);
+                    html += '</div>';
+                }
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function afiseazaTabelIMEI(items, peStoc) {
+            const bgHeader = peStoc ? '#28a745' : '#6c757d';
+            const bgRow1 = peStoc ? '#f0fff0' : '#f8f9fa';
+            
+            let html = '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white;">';
+            html += `<tr style="background:${bgHeader}; color:white; font-weight:bold;">`;
+            html += '<th style="padding:5px; border:1px solid #ddd;">Magazin</th>';
+            html += '<th style="padding:5px; border:1px solid #ddd;">Cod</th>';
+            html += '<th style="padding:5px; border:1px solid #ddd;">Denumire</th>';
+            html += '<th style="padding:5px; border:1px solid #ddd;">Descriere/IMEI</th>';
+            html += '<th style="padding:5px; border:1px solid #ddd;">Gr</th>';
+            html += '<th style="padding:5px; border:1px solid #ddd;">Pret</th>';
+            html += '<th style="padding:5px; border:1px solid #ddd;">Contract</th>';
+            html += '<th style="padding:5px; border:1px solid #ddd;">Client</th>';
+            html += '<th style="padding:5px; border:1px solid #ddd;">Stare</th>';
+            html += '</tr>';
+            
+            items.forEach((item, idx) => {
+                const stareText = item.stare_contract === 'D' ? 'Derulare' : 
+                                  item.stare_contract === 'N' ? 'Neonorat' :
+                                  item.stare_contract === 'O' ? 'Onorat' :
+                                  item.stare_contract === 'X' ? 'Cesionat' : item.stare_contract;
+                const stareColor = ['D', 'DA', 'P', 'PA'].includes(item.stare_contract) ? '#28a745' : 
+                                   item.stare_contract === 'N' ? '#dc3545' : '#6c757d';
+                
+                html += `<tr style="background:${idx % 2 === 0 ? bgRow1 : '#fff'};">`;
+                html += `<td style="padding:3px; border:1px solid #ddd; font-weight:bold;">${item.magazin}</td>`;
+                html += `<td style="padding:3px; border:1px solid #ddd;">${item.cod}</td>`;
+                html += `<td style="padding:3px; border:1px solid #ddd;">${item.denumire}</td>`;
+                html += `<td style="padding:3px; border:1px solid #ddd; font-size:10px; max-width:200px; word-wrap:break-word;">${item.descriere}</td>`;
+                html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${item.greutate > 0 ? item.greutate.toFixed(2) + 'g' : '-'}</td>`;
+                html += `<td style="padding:3px; border:1px solid #ddd; text-align:right;">${item.pret.toFixed(2)}</td>`;
+                html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${item.nr_contract}</td>`;
+                html += `<td style="padding:3px; border:1px solid #ddd;">${item.client}</td>`;
+                html += `<td style="padding:3px; border:1px solid #ddd; text-align:center; color:${stareColor}; font-weight:bold;">${stareText}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            return html;
+        }
+        
+        // Enter pentru cautare IMEI
+        document.getElementById('cautareIMEI')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                cautaIMEI();
+            }
+        });
+        
+        async function incarcaGajuriCustodieSumar() {
+            document.getElementById('statusCustodie').textContent = 'Incarcare sumar...';
+            document.getElementById('statusCustodie').style.color = '#9c27b0';
+            
+            try {
+                const response = await fetch(API_URL + '/gajuri-custodie');
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('statusCustodie').textContent = `Total: ${result.totaluri.contracte} contracte, ${result.totaluri.gajuri} gajuri`;
+                    document.getElementById('statusCustodie').style.color = '#28a745';
+                    afiseazaSumarCustodie(result.magazine, result.totaluri);
+                } else {
+                    document.getElementById('statusCustodie').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusCustodie').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusCustodie').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusCustodie').style.color = '#dc3545';
+            }
+        }
+        
+        function afiseazaSumarCustodie(magazine, totaluri) {
+            let html = '';
+            
+            html += `<div style="background:#9c27b0; color:white; padding:12px; margin-bottom:15px; border:3px solid #7b1fa2;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">📦 SUMAR GAJURI IN CUSTODIE</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">`;
+            html += `Contracte: ${totaluri.contracte} | Gajuri: ${totaluri.gajuri} | Valoare: ${totaluri.valoare.toFixed(2)} RON | Greutate: ${totaluri.greutate.toFixed(2)} g`;
+            html += `</div>`;
+            html += '</div>';
+            
+            html += '<table style="width:100%; border-collapse:collapse; font-size:12px; background:white;">';
+            html += '<tr style="background:#9c27b0; color:white; font-weight:bold;">';
+            html += '<th style="padding:8px; border:1px solid #9c27b0;">Magazin</th>';
+            html += '<th style="padding:8px; border:1px solid #9c27b0;">Nr Contracte</th>';
+            html += '<th style="padding:8px; border:1px solid #9c27b0;">Nr Gajuri</th>';
+            html += '<th style="padding:8px; border:1px solid #9c27b0;">Valoare Imprumuturi</th>';
+            html += '<th style="padding:8px; border:1px solid #9c27b0;">Greutate Totala</th>';
+            html += '</tr>';
+            
+            magazine.forEach((mag, idx) => {
+                html += `<tr style="background:${idx % 2 === 0 ? '#f3e5f5' : '#fff'};">`;
+                html += `<td style="padding:6px; border:1px solid #ddd; font-weight:bold;">${mag.magazin}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:center;">${mag.nr_contracte}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:center;">${mag.nr_gajuri}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right; font-weight:bold; color:#9c27b0;">${mag.total_valoare.toFixed(2)} RON</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right;">${mag.total_greutate.toFixed(2)} g</td>`;
+                html += '</tr>';
+            });
+            
+            html += '<tr style="background:#7b1fa2; color:white; font-weight:bold; font-size:13px;">';
+            html += '<td style="padding:10px; border:1px solid #7b1fa2;">TOTAL GENERAL</td>';
+            html += `<td style="padding:10px; border:1px solid #7b1fa2; text-align:center;">${totaluri.contracte}</td>`;
+            html += `<td style="padding:10px; border:1px solid #7b1fa2; text-align:center;">${totaluri.gajuri}</td>`;
+            html += `<td style="padding:10px; border:1px solid #7b1fa2; text-align:right;">${totaluri.valoare.toFixed(2)} RON</td>`;
+            html += `<td style="padding:10px; border:1px solid #7b1fa2; text-align:right;">${totaluri.greutate.toFixed(2)} g</td>`;
+            html += '</tr>';
+            
+            html += '</table>';
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function afiseazaGajuriCustodie(magazine, totaluri, magazinFiltru) {
+            let html = '';
+            
+            html += `<div style="background:#9c27b0; color:white; padding:12px; margin-bottom:15px; border:3px solid #7b1fa2;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">📦 GAJURI IN CUSTODIE ${magazinFiltru ? '- ' + magazinFiltru : '- TOATE MAGAZINELE'}</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">`;
+            html += `Contracte: ${totaluri.contracte} | Gajuri: ${totaluri.gajuri} | Valoare: ${totaluri.valoare.toFixed(2)} RON | Greutate: ${totaluri.greutate.toFixed(2)} g`;
+            html += `</div>`;
+            html += '</div>';
+            
+            magazine.forEach(mag => {
+                if (mag.contracte.length === 0) return;
+                
+                html += `<div style="background:#f3e5f5; border:2px solid #9c27b0; padding:10px; margin-bottom:15px; border-radius:6px;">`;
+                html += `<h3 style="margin:0 0 10px 0; font-size:13px; color:#7b1fa2;">📍 ${mag.magazin} - ${mag.nr_contracte} contracte, ${mag.nr_gajuri} gajuri, ${mag.total_valoare.toFixed(2)} RON</h3>`;
+                
+                mag.contracte.forEach(contract => {
+                    const zileColor = contract.zile_ramase < 0 ? '#dc3545' : (contract.zile_ramase < 7 ? '#ffc107' : '#28a745');
+                    const zileText = contract.zile_ramase < 0 ? `EXPIRAT (${Math.abs(contract.zile_ramase)} zile)` : `${contract.zile_ramase} zile`;
+                    
+                    html += `<div style="background:white; border:1px solid #ce93d8; padding:8px; margin-bottom:8px; border-radius:4px;">`;
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">`;
+                    html += `<span style="font-weight:bold; color:#7b1fa2;">Contract #${contract.nr_contract}</span>`;
+                    html += `<span style="font-size:11px;">Client: <strong>${contract.client}</strong></span>`;
+                    html += `<span style="font-size:11px;">Valoare: <strong style="color:#9c27b0;">${contract.valoare_imprumut.toFixed(2)} RON</strong></span>`;
+                    html += `<span style="font-size:11px; color:${zileColor}; font-weight:bold;">${zileText}</span>`;
+                    html += `</div>`;
+                    
+                    if (contract.gajuri.length > 0) {
+                        html += '<table style="width:100%; border-collapse:collapse; font-size:10px;">';
+                        html += '<tr style="background:#e1bee7;">';
+                        html += '<th style="padding:3px; border:1px solid #ce93d8;">Cod</th>';
+                        html += '<th style="padding:3px; border:1px solid #ce93d8;">Denumire</th>';
+                        html += '<th style="padding:3px; border:1px solid #ce93d8;">Greutate</th>';
+                        html += '<th style="padding:3px; border:1px solid #ce93d8;">Titlu</th>';
+                        html += '<th style="padding:3px; border:1px solid #ce93d8;">Pret</th>';
+                        html += '</tr>';
+                        
+                        contract.gajuri.forEach(gaj => {
+                            html += '<tr style="background:#fce4ec;">';
+                            html += `<td style="padding:2px 4px; border:1px solid #ddd;">${gaj.cod}</td>`;
+                            html += `<td style="padding:2px 4px; border:1px solid #ddd;">${gaj.denumire}</td>`;
+                            html += `<td style="padding:2px 4px; border:1px solid #ddd; text-align:center;">${gaj.greutate > 0 ? gaj.greutate.toFixed(2) + 'g' : '-'}</td>`;
+                            html += `<td style="padding:2px 4px; border:1px solid #ddd; text-align:center;">${gaj.titlu || '-'}</td>`;
+                            html += `<td style="padding:2px 4px; border:1px solid #ddd; text-align:right;">${gaj.pret.toFixed(2)}</td>`;
+                            html += '</tr>';
+                        });
+                        
+                        html += '</table>';
+                    }
+                    
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+            });
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function afiseazaRegistruCasa(registru, magazin, data) {
+            let html = '';
+            
+            html += `<div style="background:#17a2b8; color:white; padding:12px; margin-bottom:15px; border:3px solid #117a8b;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">📒 REGISTRU CASA - ${magazin}</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">Data: ${new Date(data).toLocaleDateString('ro-RO')}</div>`;
+            html += '</div>';
+            
+            if (registru.operatiuni.length === 0) {
+                html += '<div style="background:#fff3cd; padding:15px; border-left:4px solid #ffc107; text-align:center;">';
+                html += '<strong>Nu există operațiuni pentru această dată!</strong>';
+                html += '</div>';
+            } else {
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white; margin-bottom:15px;">';
+                html += '<thead><tr style="background:#17a2b8; color:white; font-weight:bold;">';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Nr</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Document</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Data</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Explicații</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Împrumut</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Comision</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Vânzări</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Încasări</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Plăți</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Card</th>';
+                html += '</tr></thead><tbody>';
+                
+                registru.operatiuni.forEach((op, idx) => {
+                    html += `<tr style="background:${idx % 2 === 0 ? '#f9f9f9' : '#fff'}; cursor:pointer;" onclick='deschideDetaliiOperatiune("${magazin}", ${op.id_act}, "${op.tip_act}")' onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; font-weight:bold;">${op.document}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd;">${new Date(op.data).toLocaleDateString('ro-RO')}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd;">${op.explicatii || '-'}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right;">${op.imprumut ? op.imprumut.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right;">${op.comision ? op.comision.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right;">${op.vanzari ? op.vanzari.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; color:#28a745; font-weight:bold;">${op.incasari ? op.incasari.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; color:#dc3545; font-weight:bold;">${op.plati ? op.plati.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; color:#ffc107; font-weight:bold;">${op.card ? op.card.toFixed(2) : ''}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '<tr style="background:#e7f3ff; font-weight:bold; font-size:11px;">';
+                html += '<td colspan="4" style="padding:8px; border:1px solid #ddd; text-align:right; background:#d4edda;">SOLD INITIAL:</td>';
+                html += `<td colspan="6" style="padding:8px; border:1px solid #ddd; text-align:left; background:#d4edda; color:#000; font-size:14px;">${registru.sold_initial.toFixed(2)} RON</td>`;
+                html += '</tr>';
+                html += '<tr style="background:#d4edda; font-weight:bold; font-size:12px;">';
+                html += '<td colspan="4" style="padding:10px; border:1px solid #ddd; text-align:right;">TOTAL:</td>';
+                html += '<td style="padding:10px; border:1px solid #ddd; text-align:right;"></td>';
+                html += '<td style="padding:10px; border:1px solid #ddd; text-align:right;"></td>';
+                html += '<td style="padding:10px; border:1px solid #ddd; text-align:right;"></td>';
+                html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#28a745; font-weight:bold;">${registru.total_incasari.toFixed(2)}</td>`;
+                html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#dc3545; font-weight:bold;">${registru.total_plati.toFixed(2)}</td>`;
+                html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#ffc107; font-weight:bold;">${registru.total_card.toFixed(2)}</td>`;
+                html += '</tr>';
+                html += '<tr style="background:#fff3cd; font-weight:bold; font-size:11px;">';
+                html += '<td colspan="4" style="padding:8px; border:1px solid #ddd; text-align:right; background:#d4edda;">SOLD FINAL:</td>';
+                html += `<td colspan="6" style="padding:8px; border:1px solid #ddd; text-align:left; background:#d4edda; color:#000; font-size:14px;">${registru.sold_final.toFixed(2)} RON</td>`;
+                html += '</tr>';
+                
+                html += '</tbody></table>';
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function afiseazaOperatiuni(operatiuni, magazin, data) {
+            let html = '';
+            
+            html += `<div style="background:#28a745; color:white; padding:12px; margin-bottom:15px; border:3px solid #1e7e34;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">📋 OPERATIUNI AMANET - ${magazin}</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">Data: ${new Date(data).toLocaleDateString('ro-RO')}</div>`;
+            html += '</div>';
+            
+            if (operatiuni.operatiuni.length === 0) {
+                html += '<div style="background:#fff3cd; padding:15px; border-left:4px solid #ffc107; text-align:center;">';
+                html += '<strong>Nu există operațiuni pentru această dată!</strong>';
+                html += '</div>';
+            } else {
+                html += '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white; margin-bottom:15px;">';
+                html += '<thead><tr style="background:#28a745; color:white; font-weight:bold;">';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Nr</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Document</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Data</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Explicații</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Împrumut</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Comision</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Penalități</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Încasări</th>';
+                html += '<th style="padding:6px; border:1px solid #ddd;">Plăți</th>';
+                html += '</tr></thead><tbody>';
+                
+                operatiuni.operatiuni.forEach((op, idx) => {
+                    html += `<tr style="background:${idx % 2 === 0 ? '#f9f9f9' : '#fff'}; cursor:pointer;" onclick='deschideDetaliiOperatiune("${magazin}", ${op.id_act}, "CASAAMANET")' onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; font-weight:bold;">${op.document}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd;">${new Date(op.data).toLocaleDateString('ro-RO')}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd;">${op.explicatii || '-'}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; color:#dc3545;">${op.imprumut ? op.imprumut.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; color:#28a745;">${op.comision ? op.comision.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; color:#0078d4;">${op.penalitati ? op.penalitati.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; color:#28a745; font-weight:bold;">${op.incasari ? op.incasari.toFixed(2) : ''}</td>`;
+                    html += `<td style="padding:4px; border:1px solid #ddd; text-align:right; color:#dc3545; font-weight:bold;">${op.plati ? op.plati.toFixed(2) : ''}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '<tr style="background:#d4edda; font-weight:bold; font-size:12px;">';
+                html += '<td colspan="4" style="padding:10px; border:1px solid #ddd; text-align:right;">TOTAL:</td>';
+                html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#dc3545;">${operatiuni.total_imprumut.toFixed(2)}</td>`;
+                html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#28a745;">${operatiuni.total_comision.toFixed(2)}</td>`;
+                html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#0078d4;">${operatiuni.total_penalitati.toFixed(2)}</td>`;
+                html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#28a745; font-weight:bold;">${operatiuni.total_incasari.toFixed(2)}</td>`;
+                html += `<td style="padding:10px; border:1px solid #ddd; text-align:right; color:#dc3545; font-weight:bold;">${operatiuni.total_plati.toFixed(2)}</td>`;
+                html += '</tr>';
+                
+                html += '</tbody></table>';
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        async function deschideDetaliiOperatiune(magazin, idAct, tipAct) {
+            if (!idAct) {
+                alert('Operațiune invalidă!');
+                return;
+            }
+            
+            const statusElement = tipAct ? document.getElementById('statusCasa') : document.getElementById('statusOperatiuni');
+            statusElement.textContent = 'Încărcare detalii operațiune...';
+            statusElement.style.color = '#0078d4';
+            
+            try {
+                const response = await fetch(API_URL + '/detalii-operatiune', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ magazin, idAct, tipAct })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.detalii) {
+                    statusElement.textContent = `Detalii operațiune - ${magazin}`;
+                    statusElement.style.color = '#28a745';
+                    afiseazaDetaliiOperatiune(result.detalii, magazin, tipAct);
+                } else {
+                    statusElement.textContent = 'Eroare: ' + (result.error || 'necunoscută');
+                    statusElement.style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                statusElement.textContent = 'Eroare: ' + error.message;
+                statusElement.style.color = '#dc3545';
+            }
+        }
+        
+        function afiseazaDetaliiOperatiune(detalii, magazin, tipActSalvat) {
+            let html = '';
+            
+            html += `<div style="background:#0078d4; color:white; padding:12px; margin-bottom:15px; border:3px solid #0060b0;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">📋 DETALII OPERAȚIUNE - ${magazin}</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">${detalii.document}</div>`;
+            html += '</div>';
+            
+            html += '<div style="background:white; padding:12px; border:2px solid #0078d4; margin-bottom:15px; border-radius:4px;">';
+            html += '<table style="width:100%; font-size:11px;">';
+            html += `<tr><td style="padding:4px; font-weight:bold; width:150px;">Document:</td><td style="padding:4px; font-weight:bold;">${detalii.document}</td></tr>`;
+            if (detalii.tip_operatie) {
+                const colorTip = detalii.tip_operatie === 'ÎNCASARE' ? '#28a745' : '#dc3545';
+                html += `<tr><td style="padding:4px; font-weight:bold;">Tip operație:</td><td style="padding:4px; font-weight:bold; color:${colorTip};">${detalii.tip_operatie}</td></tr>`;
+            }
+            html += `<tr><td style="padding:4px; font-weight:bold;">Data:</td><td style="padding:4px;">${new Date(detalii.data).toLocaleDateString('ro-RO')}</td></tr>`;
+            html += `<tr><td style="padding:4px; font-weight:bold;">Explicații:</td><td style="padding:4px;">${detalii.explicatii || '-'}</td></tr>`;
+            html += `<tr><td style="padding:4px; font-weight:bold;">Valoare totală:</td><td style="padding:4px; font-weight:bold; font-size:14px; color:#0078d4;">${detalii.valoare.toFixed(2)} RON</td></tr>`;
+            if (detalii.imprumut > 0) {
+                html += `<tr><td style="padding:4px; font-weight:bold;">Împrumut restituit:</td><td style="padding:4px; color:#dc3545; font-weight:bold;">${detalii.imprumut.toFixed(2)} RON</td></tr>`;
+            }
+            if (detalii.comision > 0) {
+                html += `<tr><td style="padding:4px; font-weight:bold;">Comision:</td><td style="padding:4px; color:#28a745; font-weight:bold;">${detalii.comision.toFixed(2)} RON</td></tr>`;
+            }
+            if (detalii.penalitati > 0) {
+                html += `<tr><td style="padding:4px; font-weight:bold;">Penalități:</td><td style="padding:4px; color:#ffc107; font-weight:bold;">${detalii.penalitati.toFixed(2)} RON</td></tr>`;
+            }
+            html += '</table>';
+            html += '</div>';
+            
+            if (!detalii.contract && !detalii.gajuri.length) {
+                html += '<div style="background:#fff3cd; padding:12px; border:2px solid #ffc107; margin-bottom:15px; border-radius:4px;">';
+                html += '<div style="font-weight:bold; color:#856404; font-size:12px;">ℹ️ Operațiune simplă de casă (fără contract asociat)</div>';
+                html += '</div>';
+            }
+            
+            if (detalii.contract) {
+                const stareColor = detalii.contract.stare_cod === 'AC' ? '#28a745' : 
+                                   detalii.contract.stare_cod === 'AR' ? '#6c757d' :
+                                   detalii.contract.stare_cod === 'NO' ? '#dc3545' :
+                                   detalii.contract.stare_cod === 'VD' ? '#17a2b8' : '#000';
+                
+                html += '<div style="background:#e7f3ff; padding:12px; border:2px solid #0078d4; margin-bottom:15px; border-radius:4px;">';
+                html += '<div style="font-weight:bold; color:#0078d4; margin-bottom:8px; font-size:12px;">📄 DETALII CONTRACT:</div>';
+                html += '<table style="width:100%; font-size:11px;">';
+                html += `<tr><td style="padding:4px; font-weight:bold; width:150px;">Contract nr.:</td><td style="padding:4px; font-weight:bold; color:#0078d4; font-size:14px;">${detalii.contract.nr_contract}</td></tr>`;
+                html += `<tr><td style="padding:4px; font-weight:bold;">Stare:</td><td style="padding:4px; font-weight:bold; color:${stareColor};">${detalii.contract.stare || '-'}</td></tr>`;
+                if (detalii.contract.data_contract) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Data contract:</td><td style="padding:4px;">${new Date(detalii.contract.data_contract).toLocaleDateString('ro-RO')}</td></tr>`;
+                }
+                if (detalii.contract.durata) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Durata:</td><td style="padding:4px;">${detalii.contract.durata} zile</td></tr>`;
+                }
+                if (detalii.contract.data_scadenta) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Data scadentă:</td><td style="padding:4px;">${new Date(detalii.contract.data_scadenta).toLocaleDateString('ro-RO')}</td></tr>`;
+                }
+                if (detalii.contract.data_limita) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Data limită:</td><td style="padding:4px; color:#dc3545;">${new Date(detalii.contract.data_limita).toLocaleDateString('ro-RO')}</td></tr>`;
+                }
+                if (detalii.contract.data_achitare) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Data achitare:</td><td style="padding:4px; color:#28a745; font-weight:bold;">${new Date(detalii.contract.data_achitare).toLocaleDateString('ro-RO')}</td></tr>`;
+                }
+                html += `<tr><td style="padding:4px; font-weight:bold;">Valoare împrumut:</td><td style="padding:4px; font-weight:bold; color:#dc3545; font-size:13px;">${detalii.contract.valoare.toFixed(2)} RON</td></tr>`;
+                if (detalii.contract.compr > 0) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Comision/zi (%):</td><td style="padding:4px;">${detalii.contract.compr.toFixed(2)}%</td></tr>`;
+                }
+                if (detalii.contract.penpr > 0) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Penalizare/zi (%):</td><td style="padding:4px;">${detalii.contract.penpr.toFixed(2)}%</td></tr>`;
+                }
+                if (detalii.contract.venituri > 0) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Total venituri:</td><td style="padding:4px; color:#28a745; font-weight:bold;">${detalii.contract.venituri.toFixed(2)} RON</td></tr>`;
+                }
+                if (detalii.contract.comision_incasat > 0) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Comision încasat:</td><td style="padding:4px; color:#28a745;">${detalii.contract.comision_incasat.toFixed(2)} RON</td></tr>`;
+                }
+                if (detalii.contract.penalitati_incasate > 0) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Penalități încasate:</td><td style="padding:4px; color:#ffc107;">${detalii.contract.penalitati_incasate.toFixed(2)} RON</td></tr>`;
+                }
+                html += '</table>';
+                
+                html += '<hr style="margin:10px 0; border:none; border-top:1px solid #ccc;">';
+                html += '<div style="font-weight:bold; color:#0078d4; margin-bottom:8px; font-size:12px;">👤 CLIENT:</div>';
+                html += '<table style="width:100%; font-size:11px;">';
+                html += `<tr><td style="padding:4px; font-weight:bold; width:150px;">Nume:</td><td style="padding:4px; font-weight:bold;">${detalii.contract.client}</td></tr>`;
+                if (detalii.contract.adresa) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Adresa:</td><td style="padding:4px;">${detalii.contract.adresa}</td></tr>`;
+                }
+                if (detalii.contract.seria || detalii.contract.nr) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">C.I.:</td><td style="padding:4px;">Seria ${detalii.contract.seria} Nr. ${detalii.contract.nr}</td></tr>`;
+                }
+                if (detalii.contract.cnp) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">CNP:</td><td style="padding:4px; font-family:monospace;">${detalii.contract.cnp}</td></tr>`;
+                }
+                if (detalii.contract.tel) {
+                    html += `<tr><td style="padding:4px; font-weight:bold;">Telefon:</td><td style="padding:4px;">${detalii.contract.tel}</td></tr>`;
+                }
+                html += '</table>';
+                html += '</div>';
+            }
+            
+            if (detalii.gajuri && detalii.gajuri.length > 0) {
+                let totalValoare = 0;
+                detalii.gajuri.forEach(g => totalValoare += (g.pret || 0));
+                
+                html += '<div style="background:white; padding:12px; border:2px solid #28a745; margin-bottom:15px; border-radius:4px;">';
+                html += '<div style="font-weight:bold; color:#28a745; margin-bottom:8px; font-size:12px;">📦 GAJURI (' + detalii.gajuri.length + ') - Total: ' + totalValoare.toFixed(2) + ' RON</div>';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:10px;">';
+                html += '<tr style="background:#d4edda;">';
+                html += '<th style="padding:4px; border:1px solid #ddd;">Nr</th>';
+                html += '<th style="padding:4px; border:1px solid #ddd;">Cod</th>';
+                html += '<th style="padding:4px; border:1px solid #ddd;">Denumire</th>';
+                html += '<th style="padding:4px; border:1px solid #ddd;">Cant</th>';
+                html += '<th style="padding:4px; border:1px solid #ddd;">Preț</th>';
+                html += '<th style="padding:4px; border:1px solid #ddd;">Greutate</th>';
+                html += '<th style="padding:4px; border:1px solid #ddd;">Titlu</th>';
+                html += '<th style="padding:4px; border:1px solid #ddd;">Descriere</th>';
+                html += '</tr>';
+                detalii.gajuri.forEach((gaj, idx) => {
+                    html += `<tr style="background:${idx % 2 === 0 ? '#fff' : '#f9f9f9'};">`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; font-family:monospace;">${gaj.cod || '-'}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; font-weight:bold;">${gaj.denumire}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:center;">${gaj.cant || 1}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:right; font-weight:bold;">${gaj.pret ? gaj.pret.toFixed(2) : '-'}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd; text-align:right;">${gaj.greutate ? gaj.greutate.toFixed(2) + ' g' : '-'}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd;">${gaj.titlu || '-'}</td>`;
+                    html += `<td style="padding:3px; border:1px solid #ddd;">${gaj.descriere || '-'}</td>`;
+                    html += '</tr>';
+                });
+                html += '</table></div>';
+            }
+            
+            const esteDelaRegistru = tipActSalvat && tipActSalvat !== 'CASAAMANET';
+            const btnInapoi = esteDelaRegistru ? 'inapoiLaRegistru()' : 'inapoiLaOperatiuni()';
+            const textInapoi = esteDelaRegistru ? '← ÎNAPOI LA REGISTRU' : '← ÎNAPOI LA OPERAȚIUNI';
+            
+            html += `<div style="text-align:center; margin-top:15px;"><button onclick="${btnInapoi}" style="padding:8px 20px; font-size:11px; cursor:pointer;">${textInapoi}</button></div>`;
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        let ultimulRegistru = null;
+        let ultimulMagazinCasa = null;
+        let ultimaDataCasa = null;
+        let ultimeOperatiuni = null;
+        let ultimulMagazinOperatiuni = null;
+        let ultimaDataOperatiuni = null;
+        
+        function inapoiLaRegistru() {
+            if (ultimulRegistru && ultimulMagazinCasa && ultimaDataCasa) {
+                afiseazaRegistruCasa(ultimulRegistru, ultimulMagazinCasa, ultimaDataCasa);
+                document.getElementById('statusCasa').textContent = `Registru Casa - ${ultimulMagazinCasa} - ${new Date(ultimaDataCasa).toLocaleDateString('ro-RO')}`;
+                document.getElementById('statusCasa').style.color = '#28a745';
+            }
+        }
+        
+        function inapoiLaOperatiuni() {
+            if (ultimeOperatiuni && ultimulMagazinOperatiuni && ultimaDataOperatiuni) {
+                afiseazaOperatiuni(ultimeOperatiuni, ultimulMagazinOperatiuni, ultimaDataOperatiuni);
+                document.getElementById('statusOperatiuni').textContent = `Operatiuni Amanet - ${ultimulMagazinOperatiuni} - ${new Date(ultimaDataOperatiuni).toLocaleDateString('ro-RO')}`;
+                document.getElementById('statusOperatiuni').style.color = '#28a745';
+            }
+        }
+        
+        async function incarcaSolduri() {
+            const data = document.getElementById('dataSolduri').value;
+            
+            if (!data) {
+                alert('Selectează data!');
+                return;
+            }
+            
+            document.getElementById('statusSolduri').textContent = 'Incarcare solduri...';
+            document.getElementById('statusSolduri').style.color = '#0078d4';
+            
+            try {
+                const response = await fetch(API_URL + '/solduri-magazine', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ data })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('statusSolduri').textContent = `Solduri magazine - ${new Date(data).toLocaleDateString('ro-RO')}`;
+                    document.getElementById('statusSolduri').style.color = '#28a745';
+                    afiseazaSolduri(result.solduri, data);
+                } else {
+                    document.getElementById('statusSolduri').textContent = 'Eroare: ' + (result.error || 'necunoscuta');
+                    document.getElementById('statusSolduri').style.color = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                document.getElementById('statusSolduri').textContent = 'Eroare: ' + error.message;
+                document.getElementById('statusSolduri').style.color = '#dc3545';
+            }
+        }
+        
+        function afiseazaSolduri(solduri, data) {
+            let html = '';
+            
+            html += `<div style="background:#ffc107; color:white; padding:12px; margin-bottom:15px; border:3px solid #e0a800;">`;
+            html += `<h2 style="margin:0 0 10px 0; font-size:14px;">💰 SOLDURI MAGAZINE</h2>`;
+            html += `<div style="font-size:12px; font-weight:bold;">Data cerută: ${new Date(data).toLocaleDateString('ro-RO')}</div>`;
+            html += `<div style="font-size:10px; margin-top:5px; color:#fff3cd;">* Dacă magazinul nu a fost deschis, se afișează ultimul sold disponibil</div>`;
+            html += '</div>';
+            
+            let totalSoldInitial = 0;
+            let totalIncasari = 0;
+            let totalPlati = 0;
+            let totalCard = 0;
+            let totalSoldFinal = 0;
+            
+            html += '<table style="width:100%; border-collapse:collapse; font-size:11px; background:white; margin-bottom:15px;">';
+            html += '<thead><tr style="background:#ffc107; color:white; font-weight:bold;">';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Nr</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Magazin</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Data Sold</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Sold Initial</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Încasări</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Plăți</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Card</th>';
+            html += '<th style="padding:8px; border:1px solid #ddd;">Sold Final</th>';
+            html += '</tr></thead><tbody>';
+            
+            solduri.forEach((sold, idx) => {
+                totalSoldInitial += sold.sold_initial;
+                totalIncasari += sold.incasari;
+                totalPlati += sold.plati;
+                totalCard += sold.card;
+                totalSoldFinal += sold.sold_final;
+                
+                // Verifica daca data soldului e diferita de data ceruta
+                const dataSold = sold.data_sold ? new Date(sold.data_sold).toLocaleDateString('ro-RO') : '-';
+                const dataCeruta = new Date(data).toLocaleDateString('ro-RO');
+                const eDataDiferita = dataSold !== dataCeruta && dataSold !== '-';
+                
+                html += `<tr style="background:${idx % 2 === 0 ? '#fff9e6' : '#fff'};">`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:center;">${idx + 1}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; font-weight:bold; color:#0078d4;">${sold.magazin}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:center; ${eDataDiferita ? 'color:#ff6600; font-weight:bold;' : ''}">${dataSold}${eDataDiferita ? ' *' : ''}</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right;">${sold.sold_initial.toFixed(2)} RON</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right; color:#28a745; font-weight:bold;">${sold.incasari.toFixed(2)} RON</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right; color:#dc3545; font-weight:bold;">${sold.plati.toFixed(2)} RON</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right; color:#ffc107; font-weight:bold;">${sold.card.toFixed(2)} RON</td>`;
+                html += `<td style="padding:6px; border:1px solid #ddd; text-align:right; font-weight:bold; font-size:12px;">${sold.sold_final.toFixed(2)} RON</td>`;
+                html += '</tr>';
+            });
+            
+            html += '<tr style="background:#d4edda; font-weight:bold; font-size:13px;">';
+            html += '<td colspan="3" style="padding:12px; border:1px solid #ddd; text-align:right;">TOTAL GENERAL:</td>';
+            html += `<td style="padding:12px; border:1px solid #ddd; text-align:right; color:#000;">${totalSoldInitial.toFixed(2)} RON</td>`;
+            html += `<td style="padding:12px; border:1px solid #ddd; text-align:right; color:#28a745;">${totalIncasari.toFixed(2)} RON</td>`;
+            html += `<td style="padding:12px; border:1px solid #ddd; text-align:right; color:#dc3545;">${totalPlati.toFixed(2)} RON</td>`;
+            html += `<td style="padding:12px; border:1px solid #ddd; text-align:right; color:#ffc107;">${totalCard.toFixed(2)} RON</td>`;
+            html += `<td style="padding:12px; border:1px solid #ddd; text-align:right; color:#000; font-size:14px;">${totalSoldFinal.toFixed(2)} RON</td>`;
+            html += '</tr>';
+            
+            html += '</tbody></table>';
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        // === FUNCTII PENTRU REZOLVARE MANUALA PRODUSE PIERDUTE ===
+        
+        function selecteazaToatePierdute() {
+            const checkboxes = document.querySelectorAll('.pierdut-checkbox');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
+        
+        async function rezolvaProduseBifate() {
+            const destinatie = document.getElementById('destinatieRezolvare').value.trim();
+            const explicatie = document.getElementById('explicatieRezolvare').value.trim();
+            
+            if (!destinatie) {
+                alert('Te rog scrie destinația (unde a plecat produsul)!');
+                return;
+            }
+            
+            const checkboxes = document.querySelectorAll('.pierdut-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('Selectează cel puțin un produs!');
+                return;
+            }
+            
+            const produse = [];
+            checkboxes.forEach(cb => {
+                try {
+                    const produs = JSON.parse(cb.dataset.produs);
+                    produse.push(produs);
+                } catch(e) {
+                    console.error('Eroare parsare produs:', e);
+                }
+            });
+            
+            if (produse.length === 0) {
+                alert('Eroare la citirea produselor selectate!');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/audit/rezolva-multiple', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ produse, destinatie, explicatie })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ ${data.message}\n\nProdusele au fost marcate ca rezolvate și nu vor mai apărea în lista de pierdute.`);
+                    // Reîncarcă auditul pentru a vedea modificările
+                    startAudit();
+                } else {
+                    alert('Eroare: ' + (data.error || 'Necunoscută'));
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                alert('Eroare la salvare: ' + error.message);
+            }
+        }
+        
+        // Funcție pentru a vedea toate rezolvările
+        async function veziRezolvari() {
+            try {
+                const response = await fetch('/api/audit/rezolvari');
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<h3>Rezolvări manuale salvate: ' + data.total + '</h3>';
+                    if (data.rezolvari.length > 0) {
+                        html += '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+                        html += '<tr style="background:#e9ecef;"><th>Cod</th><th>Magazin</th><th>Denumire</th><th>Destinație</th><th>Explicație</th><th>Data rezolvare</th></tr>';
+                        data.rezolvari.forEach(r => {
+                            html += `<tr>
+                                <td style="border:1px solid #ddd; padding:4px;">${r.cod}</td>
+                                <td style="border:1px solid #ddd; padding:4px;">${r.magazin_sursa}</td>
+                                <td style="border:1px solid #ddd; padding:4px;">${r.denumire}</td>
+                                <td style="border:1px solid #ddd; padding:4px; font-weight:bold;">${r.destinatie}</td>
+                                <td style="border:1px solid #ddd; padding:4px;">${r.explicatie || ''}</td>
+                                <td style="border:1px solid #ddd; padding:4px;">${new Date(r.data_rezolvare).toLocaleString('ro-RO')}</td>
+                            </tr>`;
+                        });
+                        html += '</table>';
+                    } else {
+                        html += '<p>Nu există rezolvări salvate.</p>';
+                    }
+                    
+                    // Afișează într-un modal simplu
+                    const modal = document.createElement('div');
+                    modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; display:flex; align-items:center; justify-content:center;';
+                    modal.innerHTML = `<div style="background:white; padding:20px; max-width:90%; max-height:90%; overflow:auto; border-radius:8px;">
+                        ${html}
+                        <div style="text-align:center; margin-top:15px;">
+                            <button onclick="this.closest('div').parentElement.remove()" style="padding:8px 20px; background:#6c757d; color:white; border:none; cursor:pointer;">Închide</button>
+                        </div>
+                    </div>`;
+                    document.body.appendChild(modal);
+                }
+            } catch (error) {
+                console.error('Eroare:', error);
+                alert('Eroare: ' + error.message);
+            }
+        }
+        
+    </script>
+</body>
+</html>

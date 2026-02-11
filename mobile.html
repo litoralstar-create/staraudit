@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Solduri Magazine</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #e8e8e8;
+            color: #333;
+            font-size: 14px;
+            padding-bottom: 80px;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 16px; }
+        .header .settings-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .date-picker {
+            background: white;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .date-picker label { font-weight: bold; font-size: 12px; }
+        .date-picker input {
+            padding: 8px 12px;
+            border: 2px solid #0078d4;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .date-picker button {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        .magazin-card {
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .magazin-card.green-dark { background: linear-gradient(135deg, #1b5e20, #2e7d32); }
+        .magazin-card.orange { background: linear-gradient(135deg, #e65100, #f57c00); }
+        .magazin-card.red { background: linear-gradient(135deg, #c62828, #d32f2f); }
+        .magazin-card.total { background: linear-gradient(135deg, #1e3a5f, #2c5282); }
+        
+        .magazin-name {
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            padding: 5px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .magazin-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .magazin-row:last-child { border-bottom: none; }
+        .magazin-row .label { opacity: 0.9; }
+        .magazin-row .value { font-weight: bold; }
+        
+        .magazin-sold {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 4px;
+            text-align: center;
+        }
+        .magazin-sold .label {
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+        }
+        .magazin-sold .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+        }
+        .magazin-card.red .magazin-sold .value {
+            color: #c62828;
+        }
+        .magazin-card.orange .magazin-sold .value {
+            color: #e65100;
+        }
+        
+        .magazin-updated {
+            font-size: 9px;
+            text-align: center;
+            margin-top: 6px;
+            opacity: 0.8;
+            background: rgba(0,0,0,0.2);
+            padding: 3px;
+            border-radius: 3px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0078d4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #0078d4;
+            color: white;
+            border: none;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        /* Modal Setari */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .setting-group {
+            margin-bottom: 20px;
+        }
+        .setting-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #333;
+        }
+        .setting-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .setting-group input:focus {
+            border-color: #0078d4;
+            outline: none;
+        }
+        .setting-hint {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-save {
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💰 SOLDURI MAGAZINE</h1>
+        <button class="settings-btn" onclick="showSettings()">⚙️</button>
+    </div>
+    
+    <div class="date-picker">
+        <label>Data:</label>
+        <input type="date" id="dataSelect">
+        <button onclick="incarcaSolduri()">AFIȘEAZĂ</button>
+    </div>
+    
+    <div id="content">
+        <div class="loading">
+            <div class="spinner"></div>
+            Se încarcă soldurile...
+        </div>
+    </div>
+    
+    <button class="refresh-btn" onclick="incarcaSolduri()">🔄</button>
+    
+    <!-- Modal Setări -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>⚙️ Setări Culori & Praguri</span>
+                <button class="modal-close" onclick="hideSettings()">×</button>
+            </div>
+            
+            <!-- NIVEL 1 - Pericol -->
+            <div class="setting-group">
+                <label>⚠️ NIVEL 1 - Prag pericol (sub):</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="number" id="pragNivel1" value="5000" min="0" step="500" style="flex:1;">
+                    <input type="color" id="culoareNivel1" value="#c62828" style="width:50px; height:40px; border:none; cursor:pointer;">
+                </div>
+            </div>
+            
+            <!-- NIVEL 2 - Atenție -->
+            <div class="setting-group">
+                <label>⚡ NIVEL 2 - Prag atenție (sub):</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="number" id="pragNivel2" value="10000" min="0" step="500" style="flex:1;">
+                    <input type="color" id="culoareNivel2" value="#e65100" style="width:50px; height:40px; border:none; cursor:pointer;">
+                </div>
+            </div>
+            
+            <!-- NIVEL 3 - OK -->
+            <div class="setting-group">
+                <label>✅ NIVEL 3 - Sold OK (peste pragul 2):</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="flex:1; color:#666; font-size:12px;">Carduri cu sold peste pragul de atenție</span>
+                    <input type="color" id="culoareNivel3" value="#1b5e20" style="width:50px; height:40px; border:none; cursor:pointer;">
+                </div>
+            </div>
+            
+            <!-- Preview -->
+            <div class="setting-group" style="background:#f5f5f5; padding:10px; border-radius:8px;">
+                <label style="margin-bottom:10px;">👁️ Previzualizare:</label>
+                <div style="display:flex; gap:5px; justify-content:center;">
+                    <div id="prevNivel1" style="padding:8px 15px; border-radius:5px; color:white; font-size:11px;">Sub 5000</div>
+                    <div id="prevNivel2" style="padding:8px 15px; border-radius:5px; color:white; font-size:11px;">5000-10000</div>
+                    <div id="prevNivel3" style="padding:8px 15px; border-radius:5px; color:white; font-size:11px;">Peste 10000</div>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="hideSettings()">Anulează</button>
+                <button class="btn-save" onclick="saveSettings()">💾 Salvează</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API = window.location.origin;
+        
+        // Valori implicite
+        const DEFAULTS = {
+            prag1: 5000,
+            prag2: 10000,
+            culoare1: '#c62828',  // roșu
+            culoare2: '#e65100',  // portocaliu
+            culoare3: '#1b5e20'   // verde
+        };
+        
+        // Cache local pentru setări (se încarcă de pe server)
+        let setariCache = { ...DEFAULTS };
+        
+        // Citește setările din cache (sincronizat cu server)
+        function getSetari() {
+            return setariCache;
+        }
+        
+        // Încarcă setările de pe server
+        async function incarcaSetariServer() {
+            try {
+                const response = await fetch(API + '/api/setari-culori');
+                const result = await response.json();
+                if (result.success) {
+                    setariCache = result.setari;
+                }
+            } catch (error) {
+                console.log('Nu s-au putut încărca setările de pe server:', error);
+            }
+        }
+        
+        // Determină culoarea în funcție de sold și praguri
+        function getCardStyle(sold) {
+            const s = getSetari();
+            if (sold < s.prag1) return s.culoare1;
+            if (sold < s.prag2) return s.culoare2;
+            return s.culoare3;
+        }
+        
+        // Setează data de azi
+        document.getElementById('dataSelect').value = new Date().toISOString().split('T')[0];
+        
+        // Actualizează preview în setări
+        function updatePreview() {
+            const c1 = document.getElementById('culoareNivel1').value;
+            const c2 = document.getElementById('culoareNivel2').value;
+            const c3 = document.getElementById('culoareNivel3').value;
+            const p1 = document.getElementById('pragNivel1').value;
+            const p2 = document.getElementById('pragNivel2').value;
+            
+            document.getElementById('prevNivel1').style.background = c1;
+            document.getElementById('prevNivel1').textContent = 'Sub ' + formatNumber(p1);
+            document.getElementById('prevNivel2').style.background = c2;
+            document.getElementById('prevNivel2').textContent = formatNumber(p1) + '-' + formatNumber(p2);
+            document.getElementById('prevNivel3').style.background = c3;
+            document.getElementById('prevNivel3').textContent = 'Peste ' + formatNumber(p2);
+        }
+        
+        function showSettings() {
+            const s = getSetari();
+            document.getElementById('pragNivel1').value = s.prag1;
+            document.getElementById('pragNivel2').value = s.prag2;
+            document.getElementById('culoareNivel1').value = s.culoare1;
+            document.getElementById('culoareNivel2').value = s.culoare2;
+            document.getElementById('culoareNivel3').value = s.culoare3;
+            updatePreview();
+            document.getElementById('settingsModal').style.display = 'flex';
+            
+            // Event listeners pentru preview live
+            ['pragNivel1','pragNivel2','culoareNivel1','culoareNivel2','culoareNivel3'].forEach(id => {
+                document.getElementById(id).oninput = updatePreview;
+            });
+        }
+        
+        function hideSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+        
+        async function saveSettings() {
+            const setari = {
+                prag1: document.getElementById('pragNivel1').value,
+                prag2: document.getElementById('pragNivel2').value,
+                culoare1: document.getElementById('culoareNivel1').value,
+                culoare2: document.getElementById('culoareNivel2').value,
+                culoare3: document.getElementById('culoareNivel3').value
+            };
+            
+            try {
+                const response = await fetch(API + '/api/setari-culori', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(setari)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Actualizează cache-ul local
+                    setariCache = {
+                        prag1: parseInt(setari.prag1),
+                        prag2: parseInt(setari.prag2),
+                        culoare1: setari.culoare1,
+                        culoare2: setari.culoare2,
+                        culoare3: setari.culoare3
+                    };
+                    hideSettings();
+                    incarcaSolduri(); // Reîncarcă pentru a aplica noile culori
+                } else {
+                    alert('Eroare la salvare: ' + result.error);
+                }
+            } catch (error) {
+                alert('Eroare conexiune: ' + error.message);
+            }
+        }
+        
+        async function incarcaSolduri() {
+            const data = document.getElementById('dataSelect').value;
+            
+            document.getElementById('content').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Se încarcă soldurile...
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(API + '/api/solduri-magazine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: data })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    afiseazaCarduri(result.solduri, data);
+                } else {
+                    document.getElementById('content').innerHTML = `<div class="error">Eroare: ${result.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('content').innerHTML = `<div class="error">Eroare conexiune: ${error.message}</div>`;
+            }
+        }
+        
+        function afiseazaCarduri(solduri, dataCeruta) {
+            let html = '<div class="cards-container">';
+            
+            let totalInitial = 0;
+            let totalIncasari = 0;
+            let totalPlati = 0;
+            let totalSold = 0;
+            
+            solduri.forEach((sold, idx) => {
+                totalInitial += sold.sold_initial || 0;
+                totalIncasari += sold.incasari || 0;
+                totalPlati += sold.plati || 0;
+                totalSold += sold.sold_final || 0;
+                
+                // Culoare în funcție de praguri (dinamic)
+                const soldFinal = sold.sold_final || 0;
+                const bgColor = getCardStyle(soldFinal);
+                
+                const dataSold = sold.data_sold ? new Date(sold.data_sold) : null;
+                const dataAcum = new Date();
+                let timpTrecut = '';
+                
+                if (dataSold) {
+                    const diff = Math.floor((dataAcum - dataSold) / (1000 * 60));
+                    if (diff < 60) {
+                        timpTrecut = `Actualizat acum ${diff} minute`;
+                    } else if (diff < 1440) {
+                        timpTrecut = `Actualizat acum ${Math.floor(diff/60)} ore`;
+                    } else {
+                        timpTrecut = `Actualizat acum ${Math.floor(diff/1440)} zile`;
+                    }
+                }
+                
+                html += `
+                    <div class="magazin-card" style="background: linear-gradient(135deg, ${bgColor}, ${lightenColor(bgColor)});">
+                        <div class="magazin-name">${sold.magazin}</div>
+                        <div class="magazin-row">
+                            <span class="label">Initial</span>
+                            <span class="value">${formatNumber(sold.sold_initial)}</span>
+                        </div>
+                        <div class="magazin-row">
+                            <span class="label">Încasări</span>
+                            <span class="value">${formatNumber(sold.incasari)}</span>
+                        </div>
+                        <div class="magazin-row">
+                            <span class="label">Plăți</span>
+                            <span class="value">${formatNumber(sold.plati)}</span>
+                        </div>
+                        <div class="magazin-sold">
+                            <div class="label">SOLD</div>
+                            <div class="value" style="color:${bgColor};">${formatNumber(sold.sold_final)}</div>
+                        </div>
+                        ${timpTrecut ? `<div class="magazin-updated">${timpTrecut}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            // Card TOTAL - rămâne albastru
+            const totalColor = 'total';
+            html += `
+                <div class="magazin-card ${totalColor}">
+                    <div class="magazin-name">📊 TOTAL</div>
+                    <div class="magazin-row">
+                        <span class="label">Initial</span>
+                        <span class="value">${formatNumber(totalInitial)}</span>
+                    </div>
+                    <div class="magazin-row">
+                        <span class="label">Încasări</span>
+                        <span class="value">${formatNumber(totalIncasari)}</span>
+                    </div>
+                    <div class="magazin-row">
+                        <span class="label">Plăți</span>
+                        <span class="value">${formatNumber(totalPlati)}</span>
+                    </div>
+                    <div class="magazin-sold">
+                        <div class="label">SOLD TOTAL</div>
+                        <div class="value">${formatNumber(totalSold)}</div>
+                    </div>
+                </div>
+            `;
+            
+            html += '</div>';
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function formatNumber(num) {
+            if (!num && num !== 0) return '0';
+            return Math.round(num).toLocaleString('ro-RO');
+        }
+        
+        // Funcție pentru a face culoarea mai deschisă (pentru gradient)
+        function lightenColor(hex) {
+            const r = parseInt(hex.slice(1,3), 16);
+            const g = parseInt(hex.slice(3,5), 16);
+            const b = parseInt(hex.slice(5,7), 16);
+            const factor = 1.3; // 30% mai deschis
+            return '#' + 
+                Math.min(255, Math.round(r * factor)).toString(16).padStart(2,'0') +
+                Math.min(255, Math.round(g * factor)).toString(16).padStart(2,'0') +
+                Math.min(255, Math.round(b * factor)).toString(16).padStart(2,'0');
+        }
+        
+        // Închide modal la click în afara lui
+        document.getElementById('settingsModal').addEventListener('click', function(e) {
+            if (e.target === this) hideSettings();
+        });
+        
+        // Încarcă setările o singură dată la start
+        let setariIncarcate = false;
+        
+        async function startApp() {
+            if (!setariIncarcate) {
+                await incarcaSetariServer();
+                setariIncarcate = true;
+            }
+            incarcaSolduri();
+        }
+        
+        // Pornire
+        startApp();
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "amanet-api",
+  "version": "1.0.0",
+  "description": "API Amanet - Solduri si Audit",
+  "main": "server-firebird.js",
+  "scripts": {
+    "start": "node server-firebird.js",
+    "pm2": "pm2 start server-firebird.js --name amanet-api"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-firebird": "^1.1.8"
+  }
+}

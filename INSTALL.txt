@@ -1,0 +1,102 @@
+===============================================
+   INSTALARE AMANET API PE SERVER LINUX
+===============================================
+
+1. INSTALARE NODE.JS (daca nu exista):
+   
+   # Ubuntu/Debian:
+   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+
+   # Verificare:
+   node --version
+   npm --version
+
+2. INSTALARE FIREBIRD CLIENT:
+   
+   sudo apt-get install libfbclient2
+
+3. UPLOAD FISIERE:
+   
+   Copiaza tot folderul pe server in:
+   /var/www/amanet-api/
+   
+   sau unde preferi (ex: /home/user/amanet-api/)
+
+4. CONFIGURARE:
+   
+   nano CONFIG-FIREBIRD.ini
+   
+   Seteaza:
+   - Host = IP-ul serverului Firebird (sau localhost)
+   - Database = calea catre AMANET.FDB
+   - Password = parola SYSDBA
+
+5. INSTALARE DEPENDENTE:
+   
+   cd /var/www/amanet-api
+   npm install
+
+6. TESTARE:
+   
+   node server-firebird.js
+   
+   Deschide: http://IP-SERVER:3100/mobile.html
+
+7. RULARE PERMANENTA CU PM2:
+   
+   sudo npm install -g pm2
+   pm2 start server-firebird.js --name amanet-api
+   pm2 save
+   pm2 startup
+
+8. NGINX REVERSE PROXY (optional - pentru port 80):
+   
+   sudo nano /etc/nginx/sites-available/amanet-api
+   
+   server {
+       listen 80;
+       server_name audit.staramanet.ro;
+       
+       location / {
+           proxy_pass http://127.0.0.1:3100;
+           proxy_http_version 1.1;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+   }
+   
+   sudo ln -s /etc/nginx/sites-available/amanet-api /etc/nginx/sites-enabled/
+   sudo nginx -t
+   sudo systemctl reload nginx
+
+9. FIREWALL:
+   
+   sudo ufw allow 3100
+   # sau daca folosesti nginx:
+   sudo ufw allow 80
+
+===============================================
+   ADRESE DE ACCES
+===============================================
+
+Audit complet (desktop):
+   http://audit.staramanet.ro/index.html
+
+Versiune mobil:
+   http://audit.staramanet.ro/mobile.html
+
+Sau cu port:
+   http://IP-SERVER:3100/mobile.html
+
+===============================================
+   FISIERE
+===============================================
+
+server-firebird.js  - API Node.js
+index.html          - Audit Transferuri (desktop)
+mobile.html         - Solduri + Custodie (mobil)
+CONFIG-FIREBIRD.ini - Conexiune Firebird
+package.json        - Dependente
+
+===============================================

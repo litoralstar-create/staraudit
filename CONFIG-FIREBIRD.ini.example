@@ -1,0 +1,7 @@
+[Database]
+Host=localhost
+Port=3060
+Path=/firebird/data/amanet.fdb
+User=SYSDBA
+Password=
+ApiPort=3100

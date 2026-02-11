@@ -1,0 +1,6 @@
+node_modules/
+*.log
+package-lock.json
+# NU pune credentiale pe GitHub!
+CONFIG-FIREBIRD.ini
+ecosystem.config.js
