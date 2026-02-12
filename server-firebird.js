@@ -1,4 +1,5 @@
 const express = require('express');
+const session = require('express-session');
 const cors = require('cors');
 const Firebird = require('node-firebird');
 const path = require('path');
@@ -7,9 +8,79 @@ const fs = require('fs');
 const app = express();
 const PORT = 3100;
 
+// Autentificare
+const AUTH_USER = process.env.AUDIT_USER || 'star';
+const AUTH_PASS = process.env.AUDIT_PASS || 'Star2026.,';
+
+app.use(session({
+    secret: 'audit-amanet-secret-2026',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 }
+}));
+
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.urlencoded({ extended: true }));
+
+// Middleware autentificare
+function requireAuth(req, res, next) {
+    if (req.session && req.session.authenticated) return next();
+    if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Neautorizat' });
+    res.redirect('/login');
+}
+
+// Pagina login
+app.get('/login', (req, res) => {
+    if (req.session && req.session.authenticated) return res.redirect('/');
+    res.send(getLoginPage());
+});
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === AUTH_USER && password === AUTH_PASS) {
+        req.session.authenticated = true;
+        res.redirect('/');
+    } else {
+        res.send(getLoginPage('Utilizator sau parola incorecta!'));
+    }
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/login');
+});
+
+function getLoginPage(error) {
+    return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Login - Audit Amanet</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Tahoma',sans-serif;background:#c0c0c0;height:100vh;display:flex;align-items:center;justify-content:center}
+.login-box{background:#c0c0c0;border:3px outset #dfdfdf;width:380px;box-shadow:5px 5px 20px rgba(0,0,0,0.3)}
+.login-header{background:linear-gradient(to right,#0078d4,#00a8e8);color:white;padding:10px 16px;font-weight:bold;font-size:14px}
+.login-body{padding:25px 20px}
+.login-icon{text-align:center;font-size:48px;margin-bottom:15px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-weight:bold;font-size:11px;margin-bottom:4px}
+.form-group input{width:100%;padding:6px 10px;font-size:12px;border:2px inset #d0d0d0;font-family:Tahoma}
+.login-btn{width:100%;padding:8px;font-size:13px;font-weight:bold;border:1px solid #000;cursor:pointer;background:linear-gradient(to bottom,#0078d4,#0060b0);color:white;margin-top:8px}
+.error{background:#f8d7da;color:#721c24;border:1px solid #dc3545;padding:8px;font-size:11px;margin-bottom:12px;text-align:center}
+</style></head><body>
+<div class="login-box">
+<div class="login-header">&#128202; Audit Amanet - Autentificare</div>
+<div class="login-body">
+<div class="login-icon">&#128274;</div>
+${error ? '<div class="error">' + error + '</div>' : ''}
+<form method="POST" action="/login">
+<div class="form-group"><label>Utilizator:</label><input type="text" name="username" autofocus required></div>
+<div class="form-group"><label>Parola:</label><input type="password" name="password" required></div>
+<button type="submit" class="login-btn">&#128273; AUTENTIFICARE</button>
+</form></div></div></body></html>`;
+}
+
+// Fisiere statice DOAR dupa autentificare
+app.use(requireAuth, express.static(__dirname));
 
 // === FISIER PENTRU REZOLVARI MANUALE ===
 const rezolvariPath = path.join(__dirname, 'rezolvari_audit.json');
@@ -1866,14 +1937,21 @@ app.get('/api/gajuri-custodie', async (req, res) => {
       console.log(`Citire gajuri custodie din ${mag.nume}`);
       
       // Contracte active (in derulare) - ALINIAT CU DELPHI
+      // DATA_SCADENTA se ia din ultima aditionale (daca exista), altfel din contract
       const contracte = await query(db,
-        `SELECT c.ID_CONTRACT, c.NR_CONTRACT, c.DATA_CONTRACT, c.DATA_SCADENTA, 
+        `SELECT c.ID_CONTRACT, c.NR_CONTRACT, c.DATA_CONTRACT,
+                COALESCE(
+                  (SELECT FIRST 1 ad.DATA_SCADENTA FROM ADITIONALE ad 
+                   WHERE ad.ID_CONTRACT = c.ID_CONTRACT AND ad.ID_MAGAZIN = c.ID_MAGAZIN 
+                   ORDER BY ad.DATA_ADITIONAL DESC),
+                  c.DATA_SCADENTA
+                ) AS DATA_SCADENTA,
                 c.VALOARE, c.DURATA, c.STARE,
                 cl.CLIENT, cl.CNP
          FROM CONTRACTE c
          LEFT JOIN CLIENTI cl ON cl.ID_CLIENT = c.ID_CLIENT
          WHERE c.ID_MAGAZIN = ? AND c.STARE IN ('D', 'DA', 'P', 'PA', 'N')
-         ORDER BY c.DATA_SCADENTA`,
+         ORDER BY 4`,
         [mag.id]);
       
       let magazinValoare = 0;
@@ -2075,13 +2153,19 @@ app.post('/api/gajuri-custodie/magazin', async (req, res) => {
     const db = await getConnection();
     
     const contracte = await query(db,
-      `SELECT c.ID_CONTRACT, c.NR_CONTRACT, c.DATA_CONTRACT, c.DATA_SCADENTA, 
+      `SELECT c.ID_CONTRACT, c.NR_CONTRACT, c.DATA_CONTRACT,
+              COALESCE(
+                (SELECT FIRST 1 ad.DATA_SCADENTA FROM ADITIONALE ad 
+                 WHERE ad.ID_CONTRACT = c.ID_CONTRACT AND ad.ID_MAGAZIN = c.ID_MAGAZIN 
+                 ORDER BY ad.DATA_ADITIONAL DESC),
+                c.DATA_SCADENTA
+              ) AS DATA_SCADENTA,
               c.VALOARE, c.STARE,
               cl.CLIENT, cl.CNP
        FROM CONTRACTE c
        LEFT JOIN CLIENTI cl ON cl.ID_CLIENT = c.ID_CLIENT
        WHERE c.ID_MAGAZIN = ? AND c.STARE IN ('D', 'DA', 'P', 'PA', 'N')
-       ORDER BY c.DATA_SCADENTA`,
+       ORDER BY 4`,
       [mag.id]);
     
     let totalValoare = 0;
