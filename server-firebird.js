@@ -23,11 +23,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware autentificare (doar pentru fisiere statice, API-urile sunt protejate de nginx)
+// Middleware autentificare - dezactivat, nginx protejeaza cu Basic Auth
 function requireAuth(req, res, next) {
-    if (req.session && req.session.authenticated) return next();
-    if (req.path.startsWith('/api/')) return next();
-    res.redirect('/login');
+    return next();
 }
 
 // Pagina login
